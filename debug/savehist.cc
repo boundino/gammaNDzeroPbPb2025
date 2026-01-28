@@ -9,12 +9,13 @@
 
 #include "Variable.h"
 
-int macro(std::string var, std::string configfile) {
-  xjjc::config conf(configfile); std::cout<<std::endl;
+int macro(std::string configfile, std::string var) {
+  std::cout<<std::endl;
+  xjjc::config conf(configfile);
 
   auto inputfiles = conf.get_vec("Inputs");
   auto cut = conf.get("Cut");
-  auto outputname = conf.has("Output") ? conf.get("Output") : xjjc::str_gettag_from_file(configfile);
+  auto name = conf.has("Name") ? conf.get("Name") : xjjc::str_gettag_from_file(configfile);
 
   auto idx = i_variables(var, globals::variables);
   if (idx < 0) {
@@ -23,30 +24,21 @@ int macro(std::string var, std::string configfile) {
   }
   const auto v = globals::variables[idx];
 
-  auto* outf = xjjroot::newfile("rootfiles/" + var + "_" + outputname + ".root");
+  auto* tr = xjjana::get_tree_multifiles(inputfiles, "Tree");
+  if (!tr) { std::cout<<"error: bad input file "<<conf.get("Inputs")<<"."<<std::endl; return 2; }
 
-  for (const auto& i : inputfiles) {
-    auto ipar = xjjc::str_divide_trim(i, ":");
-    if (ipar.size() < 5) { std::cout<<"warning: skip bad input "<<i<<std::endl; continue; }
-    auto* inf = TFile::Open(ipar[0].c_str());
-    if (!inf) { std::cout<<"warning: skip bad file "<<ipar[0]<<"."<<std::endl; continue; }
-    auto* tr = (TTree*)inf->Get("Tree");
-    if (!tr) { std::cout<<"warning: skip bad file "<<ipar[0]<<"."<<std::endl; continue; }
-    auto ip_name = ipar[1],
-      add_cut = ipar[4], ip_cut = cut + " && " + add_cut;
-    auto* h3 = new TH3F(Form("h3_%s", ip_name.c_str()), Form(";y;%s;p_{T} (GeV)", v.latex.c_str()),
-                        bins::ny, bins::miny, bins::maxy,
-                        v.nbin, v.minbin, v.maxbin,
-                        bins::npt, bins::minpt, bins::maxpt);
+  auto* outf = xjjroot::newfile("rootfiles/" + var + "_" + name + ".root");
+  auto* h3 = new TH3F("h3", Form(";y;%s;p_{T} (GeV)", v.latex.c_str()),
+                      bins::ny, bins::miny, bins::maxy,
+                      v.nbin, v.minbin, v.maxbin,
+                      bins::npt, bins::minpt, bins::maxpt);
 
-    std::cout<<"\e[2mFilling\e[0m "<<ipar[0]<<std::endl
-             <<"    \e[2mCut\e[0m "<<ip_cut<<std::endl
-             <<"    \e[2mVar\e[0m "<<v.var<<std::endl;
-    // tr->Project(h3->GetName(), Form("Dpt:%s:Dy", v.var.c_str()), cut.c_str(), "", 1.e7);
-    tr->Project(h3->GetName(), Form("Dpt:%s:Dy", v.var.c_str()), ip_cut.c_str());
-    outf->cd();
-    xjjroot::writehist(h3);
-  }
+  std::cout<<std::endl<<"\e[2mFilling\e[0m "<<name<<std::endl
+           <<"    \e[2mCut\e[0m "<<cut<<std::endl
+           <<"    \e[2mVar\e[0m "<<v.var<<std::endl;
+
+  tr->Project(h3->GetName(), Form("Dpt:%s:Dy", v.var.c_str()), cut.c_str());
+  xjjroot::writehist(h3);
 
   outf->Close();
 
