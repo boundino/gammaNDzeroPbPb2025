@@ -2,8 +2,10 @@
 
 # skim=0 ; label=''
 skim=1 ; label='_Dsize-gt-0_hltZDCOr_12ePD'
-ntotal=-1
+
+ntotal=3
 [[ $ntotal -gt 0 ]] && label=${label}'_nf-'$ntotal
+
 inputdirs=(
     "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260123_PbPbUPC_HIForward*_Drej-pasor.root"
     
@@ -12,8 +14,7 @@ inputdirs=(
     # The automatic output name is always the last part of the input 
     #####################
     # "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260123_PbPbUPC_HIForward*_Drej-pasor.root" # Asterisk
-    # /eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260123_2023PbPbUPC_Jan2024ReReco_20260201Forest_HIForward0_Drej-pasor # Input directory
-    # /export/d00/scratch/jwang/L1PbPb2021/crab_L1_20200322_HIZeroBiasReducedFormat_HIRun2018A_v1_2/ # Input directiory ending with /
+    # /eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260123_2023PbPbUPC_Jan2024ReReco_20260201Forest_HIForward0_Drej-pasor # Input directory, doesn't matter if it ends with /
     # /eos/cms/store/group/phys_heavyions/wangj/Forest2023/Lcpks/Pythia8_LcToKsPr_prompt_gN-PhotonA_Pthat2-pt0p9_PbPb_5362GeV/crab_HiForest_251030_LcToKsPr_prompt_gN-PhotonA_Pthat2_v0/251031_005700/0000,/eos/cms/store/group/phys_heavyions/wangj/Forest2023/Lcpks/Pythia8_LcToKsPr_prompt_gN-PhotonA_Pthat2-pt0p9_PbPb_5362GeV/crab_HiForest_251030_LcToKsPr_prompt_gN-PhotonA_Pthat2_v0.root # Forced output name
 )
 
@@ -41,23 +42,23 @@ for i in "${inputdirs[@]}" ; do
         request=${subdir[${#subdir[@]}-1]} ## last path
         output=${inputplain%${request}*}$request
     }
-    inputtag=${output##*/} ; inputtag=${inputtag%.root} ; # inputtag independent of label
-
     [[ $output != *.root ]] && { output=${output}.root ; }
     output=${output/.root/${label}.root}
     echo $output
 
-    [[ "$input" != *.root ]] && { input=${input}/*.root ; }
-    filelist=filelists/files_${inputtag}.txt
-    echo $filelist
+    name=${output##*/} ; name=${name%.root} ;
+    filelist=filelists/files_${name}.txt
     rm -f $filelist
+    echo $filelist
+    
+    [[ "$input" != *.root ]] && { input=${input}/*.root ; }
     ls $input -d > $filelist 
     [[ -s $filelist ]] || { rm $filelist ; echo -e "\e[31mwarning: no valid input files, skip.\e[0m" ; continue ; }
 
     [[ ${1:-0} -eq 1 ]] && {
         willrun=1
         [[ -f $output ]] && {
-            echo "error: output $output exits. "
+            echo "output exists: $output"
             rewrite=
             while [[ $rewrite != 'y' && $rewrite != 'n' ]] ; do
                 echo "remove output? (y/n):"            
@@ -69,7 +70,7 @@ for i in "${inputdirs[@]}" ; do
         }
 
         [[ $willrun -eq 0 ]] && continue
-        ./merge_${tmp}.exe $output $filelist $skim $ntotal;
+        ./merge_${tmp}.exe $output $filelist $skim $ntotal
     }
 done
 
