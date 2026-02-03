@@ -83,10 +83,9 @@ Long64_t xjjroot::merge::GetEntries() const {
   if (trs_.empty()) return -1;
   auto n = trs_.begin()->second->GetEntries();
   for (const auto& t : trs_) {
-    if (t.second->GetEntries() != n) {
-      LOG_XJJ << ": !! trees have different number of entries (" << t.first << ": " << t.second->GetEntries() << ")" << std::endl;
-      n = std::max(n, t.second->GetEntries());
-    }
+    auto diff_n = t.second->GetEntries() != n;
+    LOG_XJJ << ": " << (diff_n ? "!!" : ">>") << " " << t.first << " (" << t.second->GetEntries() << ")" << std::endl;
+    n = std::max(n, t.second->GetEntries());
   }
   return n;
 }

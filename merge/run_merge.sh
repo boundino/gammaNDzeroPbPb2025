@@ -3,7 +3,7 @@
 # skim=0 ; label=''
 skim=1 ; label='_Dsize-gt-0_hltZDCOr_12ePD'
 
-ntotal=3
+ntotal=-1
 [[ $ntotal -gt 0 ]] && label=${label}'_nf-'$ntotal
 
 inputdirs=(

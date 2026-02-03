@@ -19,7 +19,7 @@ TFile* dump_file(const std::string& filelist);
 
 int macro(std::string outputname, std::string filelist, bool isskim = false, int ntotal = -1) {
   //
-  LOG_XJJ << ": -- Finalized tree list" << std::endl;
+  LOG_XJJ << ": -- Finalize tree list" << std::endl;
   auto trees = get_trees_regexp(dump_file(filelist));
   if (trees.empty()) {
     LOG_XJJ << ": !! No valid trees. End." << std::endl;
@@ -36,7 +36,7 @@ int macro(std::string outputname, std::string filelist, bool isskim = false, int
    
   m.CloneTree();
   const auto nentries = m.GetEntries();
-  LOG_XJJ << ": -- Processing events" << std::endl;
+  LOG_XJJ << ": -- Process events" << std::endl;
   for (Long64_t i=0; i<nentries; i++) {
     xjjc::progressbar(i, nentries, 10000);
 
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   if (argc==5) { return macro(argv[1], argv[2], atoi(argv[3]), atoi(argv[4])); }
   if (argc==4) { return macro(argv[1], argv[2], atoi(argv[3])); }
   if (argc==3) { return macro(argv[1], argv[2]); }
-  LOG_XJJ << ": ./macro.exe [outputname] [filelist] ([number of files])";
+  LOG_XJJ << ": ./macro.exe [outputname] [filelist] ([isskim]) ([number of files])" << std::endl;
   return 1;
 }
 
