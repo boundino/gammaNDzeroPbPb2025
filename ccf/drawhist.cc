@@ -17,12 +17,12 @@ int macro(std::string configfile) {
 #define GET_AND_DRAW(q)                                                 \
   auto* h_qual_nhit##q = xjjana::getobj<TH2F>(inf, "h_qual_nhit" #q);   \
   xjjroot::sethempty(h_qual_nhit##q, 0, -0.3);                          \
+  h_qual_nhit##q->GetXaxis()->SetNdivisions(505);                       \
   h_qual_nhit##q->Draw("colz");                                         \
   globals::drawline(h_qual_nhit##q);                                    \
   xjjroot::drawCMS(ismc ? xjjroot::CMS::simulation : xjjroot::CMS::internal, conf.get("Label_1")); \
   xjjroot::drawtexgroup(0.83, 0.85, labels, 0.04, 33, 42, 1.15);
 
-  // xjjana::drawhoutline(h_qual_nhit_pass, kRed, 1, 2);
   xjjroot::setgstyle(1, 2, 1);
   xjjroot::adjust_margin(1, 3, 1, 0.7);
   TGaxis::SetMaxDigits(4);
@@ -32,10 +32,10 @@ int macro(std::string configfile) {
   GET_AND_DRAW();
   pdf->write();
 
-  labels.push_back("CCF applied manually");
-  pdf->prepare();
-  GET_AND_DRAW(_pass);
-  pdf->write();
+  // labels.push_back("CCF applied manually");
+  // pdf->prepare();
+  // GET_AND_DRAW(_pass);
+  // pdf->write();
 
   labels.pop_back();
   labels.push_back("CCF in forest applied");
