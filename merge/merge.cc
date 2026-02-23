@@ -3,22 +3,43 @@
 #include <vector>
 #include <string>
 
-#include "xjjcuti.h"
 #include "merge.h"
 
+enum class skimPreset { BRANCH = 0, ZDCOR, ZDCXORJET, DSIZE };
+
 namespace globals {
-  std::vector<std::string> trees_regexp =
+  const std::vector<std::string> trees_regexp =
     { // std::regex pattern
       ".*",
       // "hiEvtAnalyzer/HiTree",
     };
+  std::vector<int> e_skim = {};
+  const std::map<skimPreset, std::string> skim_map = {
+    { skimPreset::BRANCH, "BRANCH" },
+    { skimPreset::ZDCOR, "ZDCOR" },
+    { skimPreset::ZDCXORJET, "ZDCXORJET" },
+    { skimPreset::DSIZE, "DSIZE" }
+  };
 }
 void recursive_enter(TDirectory*, const std::string&, std::vector<std::string>&, const std::regex&);
 std::vector<std::string> get_trees_regexp(TFile* inf);
 TFile* dump_file(const std::string& filelist);
+bool has_skim(const skimPreset& l) {
+  return std::ranges::find(globals::e_skim, static_cast<int>(l)) != globals::e_skim.end();
+}
+std::vector<std::string> str_skim() {
+  std::vector<std::string> r;
+  for (const auto& [s, str] : globals::skim_map) {
+    if (has_skim(s)) r.push_back(str);
+  }
+  return r;
+}
 
-int macro(std::string outputname, std::string filelist, bool isskim = false, int ntotal = -1) {
+int macro(std::string outputname, std::string filelist, int ntotal = -1) {
   //
+  LOG_XJJ << ": -- Skim presets selected" << std::endl;
+  xjjc::print_vec_v(str_skim(), 0);
+
   LOG_XJJ << ": -- Finalize tree list" << std::endl;
   auto trees = get_trees_regexp(dump_file(filelist));
   if (trees.empty()) {
@@ -29,11 +50,22 @@ int macro(std::string outputname, std::string filelist, bool isskim = false, int
   xjjroot::merge m(trees, filelist, outputname, ntotal);
 
   // SetBranchAddress and SetBranchStatus
-  // auto* nt = m.GetTree("Tree");
-  // nt->SetBranchStatus("G*", 0);
-  // int Dsize; nt->SetBranchAddress("Dsize", &Dsize);
-  // bool isL1ZDCOr; nt->SetBranchAddress("isL1ZDCOr", &isL1ZDCOr);
-   
+  auto* nt = m.GetTree("Tree");
+  if (has_skim(skimPreset::BRANCH)) {
+    nt->SetBranchStatus("G*", 0);
+    nt->SetBranchStatus("Dtrk*Score", 0);
+    nt->SetBranchStatus("Dtrk*dedx", 0);
+    nt->SetBranchStatus("gammaN", 0);
+    nt->SetBranchStatus("Ngamma", 0);
+  }
+  int Dsize; nt->SetBranchAddress("Dsize", &Dsize);
+  bool isL1ZDCOr; nt->SetBranchAddress("isL1ZDCOr", &isL1ZDCOr);
+  bool isL1ZDCXORJet8; nt->SetBranchAddress("isL1ZDCXORJet8", &isL1ZDCXORJet8);
+
+  auto has_skim_ZDCOR = has_skim(skimPreset::ZDCOR),
+    has_skim_ZDCXORJET = has_skim(skimPreset::ZDCXORJET),
+    has_skim_DSIZE = has_skim(skimPreset::DSIZE);
+  
   m.CloneTree();
   const auto nentries = m.GetEntries();
   LOG_XJJ << ": -- Process events" << std::endl;
@@ -42,12 +74,11 @@ int macro(std::string outputname, std::string filelist, bool isskim = false, int
 
     m.GetEntry(i);
 
-    if (isskim && !( true )) continue; // skim
-    // if (isskim && !( Dsize > 0 && isL1ZDCOr)) continue;
+    if (has_skim_ZDCOR && !(isL1ZDCOr) ) continue;
+    if (has_skim_ZDCXORJET && !(isL1ZDCXORJet8) ) continue;
+    if (has_skim_DSIZE && !(Dsize > 0) ) continue;
 
     m.Fill();
-
-    break;
   }
   xjjc::progressbar_summary(nentries);
       
@@ -57,10 +88,16 @@ int macro(std::string outputname, std::string filelist, bool isskim = false, int
 }
 
 int main(int argc, char* argv[]) {
-  if (argc==5) { return macro(argv[1], argv[2], atoi(argv[3]), atoi(argv[4])); }
-  if (argc==4) { return macro(argv[1], argv[2], atoi(argv[3])); }
-  if (argc==3) { return macro(argv[1], argv[2]); }
-  LOG_XJJ << ": ./macro.exe [outputname] [filelist] ([isskim]) ([number of files])" << std::endl;
+  if (argc > 3) {
+    globals::e_skim = xjjc::str_convert_vector<int>(argv[3]);
+    std::erase_if(globals::e_skim, [](int x) {
+      return globals::skim_map.find(static_cast<skimPreset>(x)) == globals::skim_map.end();
+    });
+  }
+
+  if (argc==5) { return macro(argv[1], argv[2], atoi(argv[4])); }
+  if (argc==3 || argc==4) { return macro(argv[1], argv[2]); }
+  LOG_XJJ << ": ./macro.exe [outputname] [filelist] ([skimPreset]) ([number of files])" << std::endl;
   return 1;
 }
 
@@ -95,7 +132,7 @@ std::vector<std::string> get_trees_regexp(TFile* inf) {
         result.push_back(istr);
     }
   }
-  xjjc::print_tab(result);
+  xjjc::print_vec_v(result, 0);
   
   return result;
 }

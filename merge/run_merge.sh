@@ -1,14 +1,20 @@
 #!/bin/bash
 
-# skim=0 ; label=''
-skim=1 ; label='_Dsize-gt-0_hltZDCOr_12ePD'
+e_skim=3,0
+[[ $e_skim == *1* ]] && label=$label'_isL1ZDCOr'
+[[ $e_skim == *2* ]] && label=$label'_isL1ZDCXORJet8'
+[[ $e_skim == *3* ]] && label=$label'_Dsize'
+[[ $e_skim == *0* ]] && label=$label'_xbr'
 
 ntotal=-1
 [[ $ntotal -gt 0 ]] && label=${label}'_nf-'$ntotal
 
 inputdirs=(
-    "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260123_PbPbUPC_HIForward*_Drej-pasor.root"
-    
+    # '/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260123_PbPbUPC_HIForward*_Drej-pasor.root'
+    # /eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260205cc_PbPbUPC_HIForward0_Drej-pasor
+    # /eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0_Dpt-2_ZDCgap-3.root
+    # '/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward*_Dpt-2_Trig-2.root'
+
     #####################
     # Example input patterns
     # The automatic output name is always the last part of the input 
@@ -70,8 +76,9 @@ for i in "${inputdirs[@]}" ; do
         }
 
         [[ $willrun -eq 0 ]] && continue
-        ./merge_${tmp}.exe $output $filelist $skim $ntotal
+        ./merge_${tmp}.exe $output $filelist "$e_skim" $ntotal
     }
+
 done
 
 echo

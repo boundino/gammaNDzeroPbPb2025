@@ -7,7 +7,6 @@
 #include <vector>
 #include <string>
 
-#include "xjjcuti.h"
 #include "xjjrootuti.h"
 
 #define LOG_XJJ \
@@ -53,7 +52,7 @@ xjjroot::merge::merge(const std::vector<std::string>& treelist, std::string file
     std::cout << "\e[2m" << i << "\e[0m" << std::endl;
     for (auto& t : trs_) t.second->Add(i.c_str());
   }
-  LOG_XJJ << ": >> Merged \e[31;1m" << files_.size() << "\e[0m files." << std::endl;
+  LOG_XJJ << ": >> Merged \e[32m" << files_.size() << "\e[0m files." << std::endl;
 
   outf_ = xjjroot::newfile(outputname);
   for (const auto& [t, _] : trs_) {
