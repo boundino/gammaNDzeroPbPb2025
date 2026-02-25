@@ -18,7 +18,7 @@ namespace hfupc
   class dtree
   {
   public:
-    dtree(TTree* nt);
+    dtree(TTree* nt, int turnoffbr = false);
     TTree* nt() { return nt_; }
 
     // read
@@ -107,7 +107,7 @@ namespace hfupc
   };
 }
 
-hfupc::dtree::dtree(TTree* nt) :
+hfupc::dtree::dtree(TTree* nt, int turnoffbr) :
   nt_(nt) {
   std::cout<<"\e[32;1m -- "<<__FUNCTION__<<"\e[0m"<<std::endl;
 
@@ -115,9 +115,9 @@ hfupc::dtree::dtree(TTree* nt) :
   for (auto& i : tbvi_) { bvi_[i] = nullptr; }
   for (auto& i : tbvo_) { bvo_[i] = nullptr; }
 
-  nt_->SetBranchStatus("*", 0);
-
-  // std::vector<std::vector<std::string> > tbSuperVect = { tbfio_, tbvf_, tbvi_, tbvo_ };
+  if (turnoffbr) {
+    nt_->SetBranchStatus("*", 0);
+  }
   for (auto& tv : { tbfio_, tbvf_, tbvi_, tbvo_ }) {
     for (auto& b : tv) {
       bvs_[b] = false;
@@ -128,7 +128,7 @@ hfupc::dtree::dtree(TTree* nt) :
     }
   }
 
-  xjjc::print_tab(bvs_);
+  xjjc::print_tab(bvs_, 0);
   setbranchaddress();
 }
 

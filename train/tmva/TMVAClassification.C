@@ -295,11 +295,11 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   //// TCut mycuts = ""; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
   //// TCut mycutb = ""; // for example: TCut mycutb = "abs(var1)<0.5";
 
-  TString cuts = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycuts.c_str(), ptmin, ptmax);
-  TString cutb = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycutb.c_str(), ptmin, ptmax);
+  std::string cuts = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycuts.c_str(), ptmin, ptmax);
+  std::string cutb = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycutb.c_str(), ptmin, ptmax);
 
-  const auto mycutS = (TCut)cuts;
-  const auto mycutB = (TCut)cutb;
+  const TCut mycutS(cuts.c_str());
+  const TCut mycutB(cutb.c_str());
 
   // Tell the dataloader how to use the training and testing events
   //
@@ -343,18 +343,18 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
                          //// "!H:!V:FitMethod=MC:EffSel:SampleSize=200000:VarProp=FSmart:VarTransform=PCA" );
                          CutsPCAExp.Data());
 
-  TString CutsGAExp = "H:!V:FitMethod=GA:EffSel:Steps=40:Cycles=3:PopSize=1000:SC_steps=10:SC_rate=5:SC_factor=0.95";
-  CutsGAExp+=VarSet;
+  //// "H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95" );
+  TString CutsGAExp = "H:!V:FitMethod=GA:EffSel:Steps=30:Cycles=2:PopSize=200:SC_steps=5:SC_rate=3";
+  CutsGAExp += VarSet;
   if (Use["CutsGA"])
     factory->BookMethod( dataloader, TMVA::Types::kCuts, "CutsGA",
-                         //// "H:!V:FitMethod=GA:CutRangeMin[0]=-10:CutRangeMax[0]=10:VarProp[1]=FMax:EffSel:Steps=30:Cycles=3:PopSize=400:SC_steps=10:SC_rate=5:SC_factor=0.95" );
                          CutsGAExp.Data());
 
-  TString CutsSAExp = "!H:!V:FitMethod=SA:EffSel:MaxCalls=600000:KernelTemp=IncAdaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale";
-  CutsSAExp+=VarSet;
+  //// "!H:!V:FitMethod=SA:EffSel:MaxCalls=150000:KernelTemp=IncAdaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale" );
+  TString CutsSAExp = "!H:!V:FitMethod=SA:EffSel:MaxCalls=50000:KernelTemp=Adaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale";
+  CutsSAExp += VarSet;
   if (Use["CutsSA"])
     factory->BookMethod( dataloader, TMVA::Types::kCuts, "CutsSA",
-                         //// "!H:!V:FitMethod=SA:EffSel:MaxCalls=150000:KernelTemp=IncAdaptive:InitialTemp=1e+6:MinTemp=1e-6:Eps=1e-10:UseDefaultScale" );
                          CutsSAExp.Data());
 
   // Likelihood ("naive Bayes estimator")
@@ -604,7 +604,9 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   // --------------------------------------------------------------
 
   outf->cd("dataset");
-  TTree* info = new TTree("tmvainfo", "TMVA info");
+  auto* info = new TTree("tmvainfo", "TMVA info");
+  info->Branch("inputSname", &inputSname);
+  info->Branch("inputBname", &inputBname);
   info->Branch("cuts", &cuts);
   info->Branch("cutb", &cutb);
   info->Branch("var", &varinfo);

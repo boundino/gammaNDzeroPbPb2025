@@ -3,69 +3,74 @@
 #include "TMVAClassification.h"
 #include "mvaprod.h"
 
-void mvaprob_main(std::string inputname, std::string treename, std::string outputtag, std::string outputfiledir,
-                  std::string mymethod = "", std::string stage = "0,1,2,3,4,5,6,7,8,9,10") {
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
+void mvaprob_main(std::string inputname, std::string outputtag, std::string mymethod, std::string stage,
+                  std::string outputfiledir) {
 
   outputtag = mytmva::mkname(outputtag, mymethod, stage);
   
   std::vector<std::map<std::string, mytmva::mvaprod*>> prods(mytmva::nptbins);
   for (int i=0; i<mytmva::nptbins; i++) {
-    auto rootfname = outputtag + "_" + mytmva::mkname(mytmva::ptbins[i], mytmva::ptbins[i+1]);
+    auto rootfname = outputtag + "_" + mytmva::mkname(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + ".root";
     auto weightdir = "dataset/weights/" + xjjc::str_tag_from_file(rootfname);
     std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": found weight files:"<<mytmva::nocolor<<std::endl;
     for (const auto & entry : fs::directory_iterator(weightdir)) {
       std::string entrypath(entry.path());
       if (!xjjc::str_contains(entrypath, ".weights.xml")) continue;
       std::cout<<entrypath<<std::endl;
-      auto* pd = new mytmva::mvaprod(entrypath);
-      if (prods.find(pd->method()) != prods.end()) {
+      auto* pd = new mytmva::mvaprod(entrypath); //
+      if (prods.at(i).find(pd->method()) != prods.at(i).end()) {
         std::cout<<"error: repeated method "<<pd->method()<<", skip."<<std::endl;
         continue;
       }
       pd->getnote(rootfname);
-      prods[i][pd->method()] = pd;
+      prods.at(i)[pd->method()] = pd; //
     }
   }
 
   std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": input file:"<<mytmva::nocolor<<std::endl<<inputname<<mytmva::nocolor<<std::endl;
   std::string outfname = outputfiledir + "/" + xjjc::str_tag_from_file(inputname)
-    + "_" + xjjc::str_tag_from_file(outputtag);
+    + "_" + xjjc::str_tag_from_file(outputtag) + ".root";
   std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": output file:"<<mytmva::nocolor<<std::endl<<outfname<<mytmva::nocolor<<std::endl;
-  if (std::experimental::filesystem::exists(outfname)) {
+  if (fs::exists(outfname)) {
     std::cout<<mytmva::errorcolor<<"==> "<<__FUNCTION__<<": warning: output file already exists."<<mytmva::nocolor<<std::endl; }
   gSystem->Exec(Form("rsync --progress %s %s", inputname.c_str(), outfname.c_str()));
   
-  auto* outf = TFile::Open(outfname.c_str(), "update");
+  auto* outf = new TFile(outfname.c_str(), "update");
   auto* dir = outf->mkdir("dataset");
   dir->cd();
   auto* info = new TTree("tmvainfo", "TMVA info");
   for (int i=0; i<mytmva::nptbins; i++) {
-    prods[i].begin()->second->writenote(info, "_" + mytmva::mkname(mytmva::ptbins[i], mytmva::ptbins[i+1]));
+    prods.at(i).begin()->second->writenote(info, "_" + mytmva::mkname(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)));
   }
   info->Fill();
   info->Write("", TObject::kOverwrite);
 
+  std::cout<<"start mva value"<<std::endl;
   dir->cd();
   auto* mvatree = new TTree("mva", "TMVA value");
   std::map<std::string, std::vector<float>*> __mvaval;
   for (const auto& [mm, _] : prods.front()) {
     __mvaval[mm] = new std::vector<float>(); //
-    mvatree->Branch(mm.c_str(), &(__mvaval[mm]));
+    mvatree->Branch(mm.c_str(), &(__mvaval.at(mm)));
   }
   
   auto* inf = TFile::Open(inputname.c_str());
-  auto* value = new mytmva::varval( (TTree*)inf->Get("Tree") );
+  auto* tr = (TTree*)inf->Get("Tree");
+  auto* value = new mytmva::varval(tr);
   auto* dnt = value->getnt();
 
   std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": Filling mva values:"<<mytmva::nocolor<<std::endl;
   outf->cd();
-  int nentries = dnt->GetEntries();
-  for(int i=0; i<nentries; i++) {
+  auto nentries = dnt->GetEntries();
+  for(long long int i=0; i<nentries; i++) {
     xjjc::progressslide(i, nentries, 1000);
     dnt->GetEntry(i);
 
-    for (auto& [mm, vval] : __mvaval) {
-      __mvaval[mm]->clear();
+    for (auto& [_, vval] : __mvaval) {
+      vval->clear();
     }
     for (int j=0; j<dnt->Dsize(); j++) {
       int idxpt = mytmva::whichbin(dnt->val("Dpt", j));
@@ -73,7 +78,7 @@ void mvaprob_main(std::string inputname, std::string treename, std::string outpu
         std::cout<<"error: bad idxpt: "<<idxpt<<std::endl;
       }
       for (auto& [mm, vval] : __mvaval) {
-        auto val = prods[idxpt][mm]->evalmva(value, j);
+        auto val = prods.at(idxpt).at(mm)->evalmva(value, j);
         vval->push_back(val);
       }
     }
@@ -88,8 +93,8 @@ void mvaprob_main(std::string inputname, std::string treename, std::string outpu
 }
 
 int main(int argc, char* argv[]) {
-  if (argc==7) {
-    mvaprob_main(argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
+  if (argc==6) {
+    mvaprob_main(argv[1], argv[2], argv[3], argv[4], argv[5]);
     return 0;
   }
   return 1;

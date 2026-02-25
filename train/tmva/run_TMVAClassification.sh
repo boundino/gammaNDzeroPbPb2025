@@ -13,7 +13,7 @@ inputb=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfl
 
 # -- mva application sample
 inputms=(
-    /eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0-10-2_Dpt-2_ZDCgap-3_Dsize_xbr.root
+    /eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0_Dpt-2_ZDCgap-3_Dsize_xbr.root
 )
 outputmvadir=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/mva_output_${trainlabel}/
 
@@ -33,11 +33,11 @@ cuts=$cut ; cutb=$cut ;
 cutb=$cutb" && isL1ZDCOr && ZDCgammaN && HFEMaxPlus_forest < 16 && cscTightHalo2015Filter"
 
 ##
-algo='BDT,BDTG,LD'
+algo='BDT,BDTG,LD,CutsGA'
 # algo='BDT'
 
 # stages='0,1,2,3,4,5,6,8,9,10,11' ; sequence=0 ; # see definition below #
-stages='0,2,4,5,6' ; sequence=0 ; # see definition below #
+stages='0,1,2,3,4,5,6' ; sequence=0 ; # see definition below #
 
 ## ===== do not change the lines below =====
 varstrategy=("Single set" "Sequence")
@@ -100,15 +100,18 @@ tmp=$(date +%y%m%d%H%M%S)
 ##
 [[ $# -eq 0 ]] && echo "usage: ./run_TMVAClassification.sh [train] [draw curves] [create BDT tree]"
 echo "Compiling .C macros..."
-
-echo -e "\e[35m==> (1/5) building TMVAClassification.C\e[0m"
-make TMVAClassification.exe || exit 1
-echo -e "\e[35m==> (2/5) building guivariables.C\e[0m"
-make guivariables.exe || exit 1
-echo -e "\e[35m==> (3/5) building guiefficiencies.C\e[0m"
-make guiefficiencies.exe || exit 1
-echo -e "\e[35m==> (4/5) building guieffvar.C\e[0m"
-make guieffvar.exe || exit 1
+[[ ${1:-0} -eq 1 || $# -eq 0 ]] && {
+    echo -e "\e[35m==> (1/5) building TMVAClassification.C\e[0m"
+    make TMVAClassification.exe || exit 1
+}
+[[ ${2:-0} -eq 1 || $# -eq 0 ]] && {
+    echo -e "\e[35m==> (2/5) building guivariables.C\e[0m"
+    make guivariables.exe || exit 1
+    echo -e "\e[35m==> (3/5) building guiefficiencies.C\e[0m"
+    make guiefficiencies.exe || exit 1
+    echo -e "\e[35m==> (4/5) building guieffvar.C\e[0m"
+    make guieffvar.exe || exit 1
+}
 [[ ${3:-0} -eq 1 || $# -eq 0 ]] && {
     echo -e "\e[35m==> (5/5) building mvaprod.C\e[0m"
     make mvaprod.exe || exit 1
@@ -144,7 +147,7 @@ done
 
 # produce mva values
 for inputm in ${inputms[@]} ; do 
-    [[ ${3:-0} -eq 1 ]] && ./mvaprod_${tmp}.exe $inputm "Dfinder/ntDkpi" $output $outputmvadir "$algo" "${stages}"
+    [[ ${3:-0} -eq 1 ]] && ./mvaprod_${tmp}.exe $inputm $output "$algo" "${stages}" $outputmvadir
 done
 
 ##
