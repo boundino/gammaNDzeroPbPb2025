@@ -4,7 +4,8 @@
 
 #include "clusComp.h"
 
-// bool filter(const double& quality, const double& nPxlHits);
+// https://github.com/cms-sw/cmssw/blob/master/DataFormats/HeavyIonEvent/interface/ClusterCompatibility.h#L23
+// https://github.com/CmsHI/cmssw/blob/forest_CMSSW_15_1_X/HeavyIonsAnalysis/EventAnalysis/plugins/HIClusterCompatibilityFilter.cc#L135-L138
 int macro(std::string configfile) {
   //
   std::cout<<std::endl;
@@ -13,7 +14,7 @@ int macro(std::string configfile) {
   auto outputname = conf.has("Name") ? conf.get("Name") : xjjc::str_gettag_from_file(configfile);
   std::cout<<"\e[1m"<<outputname<<"\e[0m"<<std::endl;
   auto cut = conf.has("Cut") ? conf.get("Cut") : "(1)";
-  // cut += " && clusComp_quality > 0 && clusComp_quality < 1000.0";
+  // cut += " && clusComp_quality > 0 && clusComp_quality < 1000.0"; 
   auto cut_pass = cut + " && " + globals::makestrcut("clusComp_nPixHits", "clusComp_quality");
   auto cut_filter = cut + " && ClusterCompatibilityFilter";
 

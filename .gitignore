@@ -1,5 +1,5 @@
 *.exe
 
 **/build/
-**/figpdfs/
+**/figspdf/
 **/rootfiles/

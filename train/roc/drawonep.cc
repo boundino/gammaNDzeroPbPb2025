@@ -29,7 +29,7 @@ int macro(std::string inputname) {
   xjjroot::sethempty(hempty);
 
   xjjroot::setgstyle(1);  
-  auto* pdf = new xjjroot::mypdf("figpdfs/" + xjjc::str_erasestar(xjjc::str_divide_once(inputname, "/").back(), ".*") + ".pdf");
+  auto* pdf = new xjjroot::mypdf("figspdf/" + xjjc::str_erasestar(xjjc::str_divide_once(inputname, "/").back(), ".*") + ".pdf");
   pdf->prepare();
   hempty->Draw("axis");
   for (const auto& h : hrejBvsS) {
