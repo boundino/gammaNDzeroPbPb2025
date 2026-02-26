@@ -44,14 +44,14 @@ int macro(std::string config_train, std::string config_sig) {
 
   auto* outf = xjjroot::newfile("rootfiles/" + dir + "/" + name + ".root");
 
+  const auto h_dump = rmva->hroc("MVA_" + method + "_S_high");
   std::map<std::string, TH3F*> h3_meths;
-  auto make_h3 = [&](const std::string &key, const std::string &icut) { // can add href
-    const auto h_dump = rmva->hroc("MVA_" + method + key + "_high");
+  auto make_h3 = [&h3_meths, &method, &trs, &h_dump](const std::string &key, const std::string &icut) { // can add href
     h3_meths[key+"_high"] = new TH3F(Form("h3_%s%s_high", method.c_str(), key.c_str()), Form(";y;m_{K#pi} (GeV);%s", method.c_str()),
                                      bins::ny, bins::miny, bins::maxy,
                                      bins::nmass, bins::minmass, bins::maxmass,
                                      h_dump->GetXaxis()->GetNbins(), h_dump->GetXaxis()->GetXmin(), h_dump->GetXaxis()->GetXmax());
-    trs[key]->Project(h3_meths[key+"_high"]->GetName(), "Dmva:Dmass:Dy", cuts.c_str());
+    trs[key]->Project(h3_meths[key+"_high"]->GetName(), "Dmva:Dmass:Dy", icut.c_str());
     xjjroot::writehist(h3_meths[key+"_high"]);
   };
   make_h3("_S", cuts);
