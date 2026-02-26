@@ -6,7 +6,7 @@ namespace bins {
     yinclbins = { -1., 1. },
     ptbins = { 2., 3., 4., 5. };
 
-#ifdef __BINS_EQ__
+#ifdef __BINS_PTY_EQ__
   const int ny = 4; const float miny = -2, maxy = 2;
   const int npt = 1; const float minpt = 2, maxpt = 5;
 #endif
@@ -16,5 +16,9 @@ namespace bins {
   // const std::vector<float> ip3dsigbins = {  };
 #endif
 
+#ifdef __BINS_MASS__
+  const int nmass = 80; const float minmass = 1.66, maxmass = 2.06;
+#endif
 }
+
 #endif
