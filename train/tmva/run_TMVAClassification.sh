@@ -99,21 +99,21 @@ tmp=$(date +%y%m%d%H%M%S)
 
 ##
 [[ $# -eq 0 ]] && echo "usage: ./run_TMVAClassification.sh [train] [draw curves] [create BDT tree]"
-echo "Compiling .C macros..."
+echo "Compiling .cc macros..."
 [[ ${1:-0} -eq 1 || $# -eq 0 ]] && {
-    echo -e "\e[35m==> (1/5) building TMVAClassification.C\e[0m"
+    echo -e "\e[35m==> (1/5) building TMVAClassification\e[0m"
     make TMVAClassification.exe || exit 1
 }
 [[ ${2:-0} -eq 1 || $# -eq 0 ]] && {
-    echo -e "\e[35m==> (2/5) building guivariables.C\e[0m"
+    echo -e "\e[35m==> (2/5) building guivariables\e[0m"
     make guivariables.exe || exit 1
-    echo -e "\e[35m==> (3/5) building guiefficiencies.C\e[0m"
+    echo -e "\e[35m==> (3/5) building guiefficiencies\e[0m"
     make guiefficiencies.exe || exit 1
-    echo -e "\e[35m==> (4/5) building guieffvar.C\e[0m"
+    echo -e "\e[35m==> (4/5) building guieffvar\e[0m"
     make guieffvar.exe || exit 1
 }
 [[ ${3:-0} -eq 1 || $# -eq 0 ]] && {
-    echo -e "\e[35m==> (5/5) building mvaprod.C\e[0m"
+    echo -e "\e[35m==> (5/5) building mvaprod\e[0m"
     make mvaprod.exe || exit 1
 }
 for i in TMVAClassification guivariables guiefficiencies guieffvar mvaprod ; do
@@ -122,7 +122,7 @@ done
 
 [[ ${1:-0} -eq 1 ]] && {
     conf=
-    echo -e "\e[2m==> Do you really want to run\e[0m \e[1mTMVAClassification.C\e[0m \e[2m(it might be very slow)?\e[0m [y/n]"
+    echo -e "\e[2m==> Do you really want to run\e[0m \e[1mTMVAClassification.cc\e[0m \e[2m(it might be very slow)?\e[0m [y/n]"
     read conf
     while [[ $conf != 'y' && $conf != 'n' ]] ; do { echo "warning: input [y/n]" ; read conf ; } ; done ;
     [[ $conf == 'n' ]] && { rm *_${tmp}.exe ; exit ; }
