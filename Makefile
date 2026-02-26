@@ -1,6 +1,6 @@
 CXX = g++
 # CXXFLAGS += -O2 -Wall -Werror -Wextra
-ROOTFLAGS := `root-config --cflags --libs` -lEG -I/afs/cern.ch/user/w/wangj
+ROOTFLAGS := `root-config --cflags --libs` -lEG -I$(HOME)
 
 BUILDDIR = ./build
 

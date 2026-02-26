@@ -1,6 +1,6 @@
 CXX = g++
 # CXXFLAGS += -O2 -Wall -Werror -Wextra
-ROOTFLAGS := `root-config --cflags --libs`  -lTMVA -lTMVAGui -lXMLIO -lstdc++fs -lEG -I$(HOME)
+ROOTFLAGS := `root-config --cflags --libs` -lTMVA -lTMVAGui -lXMLIO -lstdc++fs -lEG -I$(HOME)
 
 BUILDDIR = ./build
 
