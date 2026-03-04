@@ -17,10 +17,11 @@ namespace save {
 }
 
 namespace calc {
-  float eff_cut(TH3F* h3) {
+  float eff_cut(TH3F* h3, int ymin = 0, int ymax = -1) {
     // if (Z nbins is not 2) ...
+    ymax = (ymax < 0 ? h3->GetXaxis()->GetNbins()+1 : ymax);
     auto* h1 = (TH1F*)h3->ProjectionZ(Form("%s_pass", xjjc::str_replaceall(h3->GetName(), "h3_", "h1_").c_str()),
-                                      0, h3->GetXaxis()->GetNbins()+1, // y
+                                      0, ymax, // y
                                       0, h3->GetYaxis()->GetNbins()+1); // mass
     float eff = h1->GetBinContent(2) / h1->Integral(1, h1->GetNbinsX()); // passed
     delete h1;

@@ -2,6 +2,7 @@
 namespace mytmva {
   class mvaroot {
   public:
+    mvaroot(TFile*);
     mvaroot(const std::string &inputname);
 
     // hrocs
@@ -14,34 +15,44 @@ namespace mytmva {
     // tool
     bool good() const { return good_; }
     void print() const;
+    void print_info() const { xjjc::print_tab(info_, -1); }
     void write_hrocs(const std::string &pattern);
+    void write_info(TTree*);
+    auto methods() const { return methods_; }
     
   private:
     bool good_;
     std::vector<TH1D*> hrocs_;
     std::map<std::string, std::string> info_;
-    
-    std::map<std::string, int> methods_;
-
-    void hrocs_from_file(TDirectory* dir, const std::string &pattern);
+    std::vector<std::string> methods_;
   };
 }
 
-mytmva::mvaroot::mvaroot(const std::string &inputname) :
-  good_(false) {
-  auto* inf = TFile::Open(inputname.c_str());
+mytmva::mvaroot::mvaroot(TFile* inf)
+  : good_(false) {
   if (inf) {
-    auto* dataset_ = (TDirectory*)inf->Get("dataset");
-    if (dataset_) {
-      hrocs_from_file(dataset_, "MVA_[^_]+_.+");
-      auto* rinfo = (TTree*)inf->Get("dataset/tmvainfo");
-      if (rinfo) {
-        info_ = xjjana::getstr_regexp(rinfo, ".*");
-        info_["rootfile"] = inputname;
-        good_ = true;
+    auto* dataset = (TDirectory*)inf->Get("dataset");
+    if (dataset) {
+      hrocs_ = xjjana::getobj_regexp_recur<TH1D>(dataset, "MVA_[^_]+_.+");
+      for (const auto h : hrocs_) {
+        auto meth = xjjc::str_divide(h->GetName(), "_").at(1);
+        if (std::ranges::find(methods_, meth) == methods_.end())
+          methods_.push_back(meth);
       }
     }
+    auto* tinfo = (TTree*)inf->Get("dataset/tmvainfo");
+    if (!tinfo) tinfo = (TTree*)inf->Get("info");
+    if (tinfo) {
+      info_ = xjjana::getstr_regexp(tinfo, ".*");
+    }
+    good_ = dataset && tinfo;
   }
+}
+
+mytmva::mvaroot::mvaroot(const std::string &inputname)
+  : mvaroot(TFile::Open(inputname.c_str())) {
+  if (!has_info("rootfile"))
+    info_["rootfile"] = inputname;
 }
 
 std::vector<TH1D*> mytmva::mvaroot::hrocs(const std::string &pattern) const {
@@ -61,28 +72,6 @@ TH1D* mytmva::mvaroot::hroc(const std::string &key) const {
   return hs.size() > 0 ? hs.front() : nullptr;
 }
 
-// https://github.com/root-project/root/blob/master/tmva/tmvagui/src/efficiencies.cxx#L116-L158
-// https://github.com/root-project/root/blob/master/tmva/tmvagui/src/tmvaglob.cxx#L590
-void mytmva::mvaroot::hrocs_from_file(TDirectory* dir, const std::string &pattern) {
-  TIter next(dir->GetListOfKeys());
-  TKey* key;
-  std::regex re(pattern);
-  while ((key = (TKey*)next())) {
-    TObject* obj = key->ReadObj();
-    if (obj->InheritsFrom(TDirectory::Class())) {
-      hrocs_from_file((TDirectory*)obj, pattern); //
-    } else if (obj->InheritsFrom(TH1::Class())) {
-      if (std::regex_match(obj->GetName(), re))
-	hrocs_.push_back((TH1D*)obj);
-    }
-  }  
-  for (const auto& h : hrocs_) {
-    const auto m = xjjc::str_divide(h->GetName(), "_").at(1); // MVA_[method]_*
-    if (methods_.find(m) == methods_.end()) methods_[m] = 0; //
-    else if (xjjc::str_contains(h->GetName(), "_S_high")) methods_[m]++;
-  }
-}
-
 void mytmva::mvaroot::print() const {
   xjjc::print_vec_v([&] {
     std::vector<std::string> hnames;
@@ -91,7 +80,6 @@ void mytmva::mvaroot::print() const {
     return hnames;
   }(), 0);
 
-  xjjc::print_tab(info_, -1);
 }
 
 void mytmva::mvaroot::write_hrocs(const std::string &pattern) {
@@ -99,5 +87,11 @@ void mytmva::mvaroot::write_hrocs(const std::string &pattern) {
   for (auto& h : hrocs_) {
     if (std::regex_match(h->GetName(), re))
       xjjroot::writehist(h);
+  }
+}
+
+void mytmva::mvaroot::write_info(TTree* t) {
+  for (auto& [key, content] : info_) {
+    t->Branch(key.c_str(), &content);
   }
 }
