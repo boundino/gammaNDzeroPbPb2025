@@ -12,9 +12,8 @@
 
 namespace mytmva
 {
-  std::vector<float> ptbins({2., 5.});
-  int nptbins = ptbins.size()-1;
-  int whichbin(float pt);
+  std::vector<float> ptbins({2., 5.}), ybins({-2., -1., 0., 1., 2.});
+  int whichbin(float value, const std::vector<float>& vbins);
   
   struct tmvavar
   {
@@ -96,9 +95,10 @@ namespace mytmva
   };
 
   // std::vector<std::string> argmethods; std::vector<int> argstages;
-  std::string mkname(std::string outputname, std::string mymethod, std::string stage, float ptmin, float ptmax);
+  std::string mkname(std::string outputname, std::string mymethod, std::string stage, float ptmin, float ptmax, float ymin, float ymax);
   std::string mkname(std::string outputname, std::string mymethod, std::string stage);
-  std::string mkname(float ptmin, float ptmax);
+  std::string mkname_pt(float ptmin, float ptmax);
+  std::string mkname_y(float ptmin, float ptmax);
 }
 
 const mytmva::tmvavar* mytmva::findvar(std::string varlabel) {
@@ -109,12 +109,11 @@ const mytmva::tmvavar* mytmva::findvar(std::string varlabel) {
   return 0;
 }
 
-int mytmva::whichbin(float pt) {
-  std::vector<float> bins(ptbins);
-  if (bins[nptbins] < 0) { bins[nptbins] = 1.e+10; }
+int mytmva::whichbin(float value, const std::vector<float>& vbins) {
+  std::vector<float> bins(vbins);
   int idx = -1;
   for (int i=0; i<bins.size(); i++) {
-    if (pt < bins[i]) break;
+    if (value < bins[i]) break;
     idx = i;
   }
   if (idx < 0) idx = 0;
@@ -131,20 +130,22 @@ std::string mytmva::mkname(std::string outputname, std::string mymethod, std::st
   return outfname;
 }
 
-std::string mytmva::mkname(float ptmin, float ptmax) {
-  auto outfname = "pt-" + xjjc::number_to_string(ptmin) + "-" + (ptmax<0?"inf":xjjc::number_to_string(ptmax));
+std::string mytmva::mkname_pt(float ptmin, float ptmax) {
+  auto outfname = "pt-" + xjjc::number_to_string(ptmin) + "-" + (ptmax>1.e4?"inf":xjjc::number_to_string(ptmax));
   return outfname;
 }
 
-std::string mytmva::mkname(std::string outputname, std::string mymethod, std::string stage, float ptmin, float ptmax) {
+std::string mytmva::mkname_y(float ymin, float ymax) {
+  auto outfname = "y-" + xjjc::number_to_string(ymin) + "-" + xjjc::number_to_string(ymax);
+  return outfname;
+}
+
+std::string mytmva::mkname(std::string outputname, std::string mymethod, std::string stage, float ptmin, float ptmax, float ymin, float ymax) {
   mymethod = xjjc::str_replaceall(mymethod, " ", "");
   stage = xjjc::str_replaceall(stage, " ", "");
   auto outfname = mkname(outputname, mymethod, stage)
-    + "_" + mkname(ptmin, ptmax)
+    + "_" + mkname_pt(ptmin, ptmax) + "_" + mkname_y(ymin, ymax)
     + ".root";
-  // std::string outfname(Form("%s_%s_%s-%s_%s.root", outputname.c_str(), xjjc::str_replaceall(mymethod, ",", "-").c_str(),
-  //                           xjjc::number_to_string(ptmin).c_str(), (ptmax<0?"inf":xjjc::number_to_string(ptmax).c_str()),
-  //                           xjjc::str_replaceall(stage, ",", "-").c_str()));
   return outfname;
 }
 

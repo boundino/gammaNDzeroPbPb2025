@@ -1,15 +1,15 @@
 #!/bin/bash
 
 ##
-trainlabel='260222-gammaN'
+trainlabel='260309-gammaN'
 
 # -- signal sample for training
 inputs=/eos/cms/store/group/phys_heavyions/wangj/Forest2024PbPb/Dzero_260212-hfle_HiForest_260218_prompt_GNucleusToD0-PhotonBeamA_Bin-Pthat0_Kpi_t2.root
 
 # -- background sample for training
 bkgstrategy=sideband
-# inputb=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0-10-2_Dpt-2_ZDCgap-3_Dsize_xbr.root
-inputb=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0_Dpt-2_ZDCgap-3_Dsize_xbr.root
+inputb=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0-10-2_Dpt-2_ZDCgap-3_Dsize_xbr.root
+# inputb=/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_PbPbUPC_HIForward0_Dpt-2_ZDCgap-3_Dsize_xbr.root
 
 # -- mva application sample
 inputms=(
@@ -42,6 +42,7 @@ stages='0,1,2,3,4,5,6' ; sequence=0 ; # see definition below #
 ## ===== do not change the lines below =====
 varstrategy=("Single set" "Sequence")
 
+cutpre=$cutb
 cuts=$cuts" && (Dgen == 23333)"
 [[ $bkgstrategy == "sideband" ]] && cutb=$cutb" && TMath::Abs(Dmass-1.8648) > 0.05 && TMath::Abs(Dmass-1.8648) < 0.12" # sideband
 [[ $bkgstrategy == "samesign" ]] && cutb=$cutb" && TMath::Abs(Dmass-1.8648) < 0.03" # samesign
@@ -131,7 +132,7 @@ done
 # train
 stage=$stages
 while [[ $stage == *,* ]] ; do
-    [[ ${1:-0} -eq 1 ]] && { ./TMVAClassification_${tmp}.exe $inputs $inputb "$cuts" "$cutb" $output "$algo" "$stage"; } 
+    [[ ${1:-0} -eq 1 ]] && { ./TMVAClassification_${tmp}.exe $inputs $inputb "$cuts" "$cutb" $output "$algo" "$stage" "$cutpre" ; } 
     [[ $sequence -eq 0 ]] && break;
     while [[ $stage != *, ]] ; do stage=${stage%%[0-9]} ; done ;
     stage=${stage%%,}

@@ -11,9 +11,9 @@ void mvaprob_main(std::string inputname, std::string outputtag, std::string myme
 
   outputtag = mytmva::mkname(outputtag, mymethod, stage);
   
-  std::vector<std::map<std::string, mytmva::mvaprod*>> prods(mytmva::nptbins);
-  for (int i=0; i<mytmva::nptbins; i++) {
-    auto rootfname = outputtag + "_" + mytmva::mkname(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + ".root";
+  std::vector<std::map<std::string, mytmva::mvaprod*>> prods(mytmva::ptbins.size()-1);
+  for (int i=0; i<mytmva::ptbins.size()-1; i++) {
+    auto rootfname = outputtag + "_" + mytmva::mkname_pt(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + ".root";
     auto weightdir = "dataset/weights/" + xjjc::str_tag_from_file(rootfname);
     std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": found weight files:"<<mytmva::nocolor<<std::endl;
     for (const auto & entry : fs::directory_iterator(weightdir)) {
@@ -42,8 +42,8 @@ void mvaprob_main(std::string inputname, std::string outputtag, std::string myme
   auto* dir = outf->mkdir("dataset");
   dir->cd();
   auto* info = new TTree("tmvainfo", "TMVA info");
-  for (int i=0; i<mytmva::nptbins; i++) {
-    prods.at(i).begin()->second->writenote(info, "_" + mytmva::mkname(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)));
+  for (int i=0; i<mytmva::ptbins.size()-1; i++) {
+    prods.at(i).begin()->second->writenote(info, "_" + mytmva::mkname_pt(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)));
   }
   info->Fill();
   info->Write("", TObject::kOverwrite);
@@ -73,7 +73,7 @@ void mvaprob_main(std::string inputname, std::string outputtag, std::string myme
       vval->clear();
     }
     for (int j=0; j<dnt->Dsize(); j++) {
-      int idxpt = mytmva::whichbin(dnt->val("Dpt", j));
+      int idxpt = mytmva::whichbin(dnt->val("Dpt", j), mytmva::ptbins);
       if (idxpt < 0 || idxpt >= prods.size()) {
         std::cout<<"error: bad idxpt: "<<idxpt<<std::endl;
       }

@@ -21,22 +21,15 @@
 #include "xjjrootuti.h"
 #include "TMVAClassification.h"
 
-int TMVAClassification(std::string inputSname, std::string inputBname, std::string mycuts, std::string mycutb, 
-                       std::string outputname, float ptmin, float ptmax, std::string mymethod, std::string stage)
-{
-  std::string outfname = mytmva::mkname(outputname, mymethod, stage, ptmin, ptmax);
+int TMVAClassification(std::string inputSname, std::string inputBname, std::string mycutS, std::string mycutB, 
+                       std::string outputname, int iptbin, int iybin,
+                       std::string mymethod, std::string stage,
+                       std::string mycutPre = "") {
+  auto ptmin = mytmva::ptbins[iptbin], ptmax = mytmva::ptbins[iptbin+1], ymin = mytmva::ybins[iybin], ymax = mytmva::ybins[iybin+1];
+  std::string outfname = mytmva::mkname(outputname, mymethod, stage, ptmin, ptmax, ymin, ymax);
   std::string outputstr = xjjc::str_tag_from_file(outfname);
-  if(ptmax < 0) { ptmax = 1.e+10; }
   auto methods = xjjc::str_divide_trim(mymethod, ",");
   auto stages = xjjc::str_convert_vector<int>(stage, ",");
-
-  // The explicit loading of the shared libTMVA is done in TMVAlogon.C, defined in .rootrc
-  // if you use your private .rootrc, or run from a different directory, please copy the
-  // corresponding lines from .rootrc
-
-  // Methods to be processed can be given as an argument; use format:
-  //
-  //     mylinux~> root -l TMVAClassification.C\(\"myMethod1,myMethod2,myMethod3\"\)
 
   //---------------------------------------------------------------
   // This loads the library
@@ -191,7 +184,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   // All TMVA output can be suppressed by removing the "!" (not) in
   // front of the "Silent" argument in the option string
   auto *factory = new TMVA::Factory( "TMVAClassification", outf,
-                                              "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
+                                     "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
 
   auto *dataloader = new TMVA::DataLoader("dataset");
   // If you wish to modify default settings
@@ -226,7 +219,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   std::cout << "==> " << __FUNCTION__ << ": VarSet = " << VarSet << std::endl;
 
   // Spectator
-  dataloader->AddSpectator("Dmass");
+  // dataloader->AddSpectator("Dmass");
 
   // You can add so-called "Spectator variables", which are not used in the MVA training,
   // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
@@ -295,11 +288,11 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   //// TCut mycuts = ""; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
   //// TCut mycutb = ""; // for example: TCut mycutb = "abs(var1)<0.5";
 
-  std::string cuts = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycuts.c_str(), ptmin, ptmax);
-  std::string cutb = Form("(%s) && Dpt>%.2f && Dpt<%.2f", mycutb.c_str(), ptmin, ptmax);
+  std::string cutS = Form("%s && Dpt>=%.2f && Dpt<%.2f && Dy>=%.1f && Dy<%.1f", mycutS.c_str(), ptmin, ptmax, ymin, ymax);
+  std::string cutB = Form("%s && Dpt>=%.2f && Dpt<%.2f && Dy>=%.1f && Dy<%.1f", mycutB.c_str(), ptmin, ptmax, ymin, ymax);
 
-  const TCut mycutS(cuts.c_str());
-  const TCut mycutB(cutb.c_str());
+  const TCut tcutS(cutS.c_str());
+  const TCut tcutB(cutB.c_str());
 
   // Tell the dataloader how to use the training and testing events
   //
@@ -314,7 +307,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   //         "NSigTrain=3000:NBkgTrain=3000:NSigTest=3000:NBkgTest=3000:SplitMode=Random:!V" );
   //// dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
   ////                                      "nTrain_Signal=1000:nTrain_Background=1000:SplitMode=Random:NormMode=NumEvents:!V" );
-  dataloader->PrepareTrainingAndTestTree( mycutS, mycutB,
+  dataloader->PrepareTrainingAndTestTree( tcutS, tcutB,
                                           "nTrain_Signal=0:nTrain_Background=0:nTest_Signal=0:nTest_Background=0:SplitMode=Random:NormMode=NumEvents:!V" );
 
   // ### Book MVA methods
@@ -607,9 +600,16 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   auto* info = new TTree("tmvainfo", "TMVA info");
   info->Branch("inputSname", &inputSname);
   info->Branch("inputBname", &inputBname);
-  info->Branch("cuts", &cuts);
-  info->Branch("cutb", &cutb);
+  info->Branch("cutS", &cutS);
+  info->Branch("cutB", &cutB);
+  info->Branch("cutPre", &mycutPre);
   info->Branch("var", &varinfo);
+  info->Branch("iptbin", &iptbin);
+  info->Branch("ptmin", &ptmin);
+  info->Branch("ptmax", &ptmax);
+  info->Branch("iybin", &iybin);
+  info->Branch("ymin", &ymin);
+  info->Branch("ymax", &ymax);
   info->Fill();
   info->Write();
 
@@ -630,9 +630,12 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
 }
 
 int main(int argc, char* argv[]) {
-  if(argc==8) {
-    for(int i=0; i<mytmva::nptbins; i++) {
-      TMVAClassification(argv[1], argv[2], argv[3], argv[4], argv[5], mytmva::ptbins[i], mytmva::ptbins[i+1], argv[6], argv[7]); 
+  if (argc == 9) {
+    for (int i=0; i<mytmva::ptbins.size()-1; i++) {
+      for (int j=0; j<mytmva::ybins.size()-1; j++) {
+        TMVAClassification(argv[1], argv[2], argv[3], argv[4], argv[5],
+                           i, j, argv[6], argv[7], argv[8]);
+      }
     }
     return 0;
   }

@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #include <TFile.h>
 #include <TTree.h>
 #include <TSystem.h>
@@ -26,7 +28,7 @@ namespace mytmva
     void getnote(const std::string& trainrootfile = "");
     void writenote(TTree* info, const std::string& suffix);
     float evalmva(mytmva::varval* values, int j);
-    std::string method() { return method_; }
+    std::string method() const { return method_; }
     bool valid() { return valid_; }
     
   private:
@@ -38,6 +40,8 @@ namespace mytmva
     std::map<std::string, float> varval_, specval_;
     std::string cuts_, cutb_, varinfo_, varnote_;
   };
+
+  xjjc::array2D<std::map<std::string, mvaprod*>> dir_to_weights(const std::string&);
 }
 
 mytmva::mvaprod::mvaprod(std::string weight) :
@@ -109,7 +113,7 @@ void mytmva::mvaprod::getnote(const std::string& trainrootfile) {
   auto* inf = TFile::Open(trainrootfile.c_str());
   if (inf) {
     auto* rinfo = (TTree*)inf->Get("dataset/tmvainfo");
-    if (rinfo) { 
+    if (rinfo) {
       TString *cuts = nullptr, *cutb = nullptr; std::string *varinfo = nullptr;
       rinfo->SetBranchAddress("cuts", &cuts);
       rinfo->SetBranchAddress("cutb", &cutb);
@@ -145,6 +149,36 @@ float mytmva::mvaprod::evalmva(mytmva::varval* values, int j) {
   // xjjc::print_tab(varval_, 0);
   float result = (badinput ? -999 : reader_->EvaluateMVA(Form("%s method", method_.c_str())));
   return result;
+}
+
+xjjc::array2D<std::map<std::string, mvaprod*>> mytmva::dir_to_weights(const std::string& prefix) {
+  auto prods = xjjc::array2d<std::map<std::string, mvaprod*>>(mytmva::ptbins.size()-1, mytmva.ybins.size()-1);
+  for (int i=0; i<mytmva::ptbins.size()-1; i++) {
+    for (int j=0; j<mytmva::ybins.size()-1; j++) {
+      mvaprod* pd = nullptr;
+      if (xjjc::str_contains(prefix, ".weights.xml")) { // single weight for all kinematic bins
+        pd = new mvaprod(prefix);
+      } else { // different weights 
+        auto weightdir = prefix + "_" + mytmva::mkname_pt(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + "_" + mytmva::mkname_y(mytmva::ybins.at(j), mytmva::ybins.at(j+1));
+        __XJJLOG << "++ found weight files in " << weightdir << ": " << std::endl;
+        for (const auto& entry : fs::directory_iterator(weightdir)) {
+          std::string entrypath(entry.path());
+          if (!xjjc::str_contains(entrypath, ".weights.xml")) continue;
+          std::cout<<entrypath<<std::endl;
+          pd = new mvaprod(entrypath); //
+        }
+      }
+      auto& iprod = prods.at(i).at(j);
+      if (!pd->valid()) {
+        __XJJLOG << "!! has a bad weight for " << prefix << ". mva is deactivated." << std::endl;
+        pd = nullptr;
+      } else if (iprod.find(pd->method()) != iprod.end()) {
+        __XJJLOG << "!! repeated method " << pd->method() << std::endl;
+        continue;
+      }
+      iprod[pd->method()] = pd; //
+    }
+  }
 }
 
 #endif
