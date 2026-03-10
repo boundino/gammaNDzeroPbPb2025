@@ -18,26 +18,24 @@ int macro(std::string inputname) {
   auto* rmva = new mytmva::mvaroot(inf);
   rmva->print_info();
   auto* h3_dump = (TH3F*)xjjana::getobj_regexp<TH3F>(inf, "h3_.+").front()->Clone("h3_dump"); h3_dump->Reset();
-  const auto method = rmva->info("method");
+  const auto method = rmva->info("method"), mprefix = "MVA_" + method;
   for (auto& h : rmva->hrocs(".+"))
     style_hist(h);
   // application
   std::map<std::string, std::vector<TH1D*>> h1ys;
   for (const std::string &t : { "S", "B", "effS", "effB", "effvsMVA", "rejBvsS", "massAnchor", "massTemplate_S", "massTemplate_Swap" }) {
-    h1ys[t] = xjjana::getobj_regexp<TH1D>(inf, "h1_"+t+"__y-[0-9]*");
+    h1ys[t] = xjjana::getobj_regexp<TH1D>(inf, "h1_" + t + "__y-[0-9]*");
     for (auto &h : h1ys[t]) { style_hist(h); }
   } 
   xjjroot::print_tab(h1ys, 0);
   std::map<std::string, TH1D*> h1s;
   for (const std::string &t : { "mvaAnchor", "S", "B", "S_high", "B_high" }) {
-    h1s[t] = xjjana::getobj<TH1D>(inf, "h1_"+t);
+    h1s[t] = xjjana::getobj<TH1D>(inf, "h1_" + t);
     style_hist(h1s[t]);
   }
   xjjroot::print_tab(h1s, 0);
 
-  std::map<std::string, std::vector<TGraph*>> grys;
-  grys["rejBvsS"] = xjjana::getobj_regexp<TGraph>(inf, "gr_rejBvsS_high__y-[0-9]*");
-  xjjroot::print_tab(grys, 0);
+  auto* df = new xjjroot::dfitter("S3");
 
   auto label_y = [&h3_dump](int i) {
     const auto ymin = h3_dump->GetXaxis()->GetBinLowEdge(i+1), ymax = h3_dump->GetXaxis()->GetBinUpEdge(i+1);
@@ -49,8 +47,8 @@ int macro(std::string inputname) {
       leg->AddEntry(h1legs.at(i), label_y(i).c_str(), opt.c_str());
     }
   };
-  auto* leg = new TLegend(0.25, 0.5-0.04*(grys.at("rejBvsS").size()+1), 0.5, 0.5);
-  leg->AddEntry(rmva->hroc("MVA_BDT_rejBvsS"), "Train", "l");
+  auto* leg = new TLegend(0.25, 0.5-0.04*(h1ys.at("rejBvsS").size()+1), 0.5, 0.5);
+  leg->AddEntry(rmva->hroc(".+_rejBvsS"), "Train", "l");
   leg_y(leg, h1ys.at("rejBvsS"), "l");
 
   auto* hempty = new TH2F("hempty", "", 10, 0, 1, 10, 0, 1);
@@ -60,13 +58,13 @@ int macro(std::string inputname) {
   h1s.at("S")->Scale(1./h1s.at("S")->Integral(), "width");
   h1s.at("B")->Scale(1./h1s.at("B")->Integral(), "width");
   auto hmvas = std::vector<std::pair<std::string, TH1D*>>({
-      { "Train", rmva->hroc("MVA_BDT_S") },
+      { "Train", rmva->hroc(mprefix + "_S") },
       { "Application", h1s.at("S") },
-      { "Train", rmva->hroc("MVA_BDT_B") },
+      { "Train", rmva->hroc(mprefix + "_B") },
       { "Application", h1s.at("B") },
     });
   auto hymax = xjjana::sethsmax(hmvas);
-  delete hempty; hempty = new TH2F("hempty", Form(";%s;Distribution", method.c_str()), 10, rmva->hroc("MVA_BDT_S")->GetXaxis()->GetXmin(), rmva->hroc("MVA_BDT_S")->GetXaxis()->GetXmax(), 10, 0, hymax*1.3);
+  delete hempty; hempty = new TH2F("hempty", Form(";%s;Distribution", method.c_str()), 10, rmva->hroc(mprefix + "_S")->GetXaxis()->GetXmin(), rmva->hroc(mprefix + "_S")->GetXaxis()->GetXmax(), 10, 0, hymax*1.3);
   xjjroot::sethempty(hempty);
   auto* legm = new TLegend(0.5, 0.85-0.04*2, 0.85, 0.85);
   legm->SetNColumns(2);
@@ -78,7 +76,7 @@ int macro(std::string inputname) {
     legm->AddEntry(h, t.c_str(), xjjc::str_contains(t, "rain") ? "f" : "p");
   }
   legm->Draw();
-  xjjroot::drawtexgroup(0.47, 0.85, { "Signal", "Background" }, 0.038, 33);
+  xjjroot::drawtexgroup(0.47, 0.85, { "Signal", "Background" }, 0.038, 33, 42, 1.15, 1, 0, { h1s.at("S")->GetLineColor(), h1s.at("B")->GetLineColor() });
   xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
   pdf->write();  
   
@@ -88,9 +86,8 @@ int macro(std::string inputname) {
   hempty->Draw("axis");
   for (int i=0; i<h1ys.at("rejBvsS").size(); i++) {
     h1ys.at("rejBvsS").at(i)->Draw("c same");
-    // grys.at("rejBvsS").at(i)->Draw("c same");
   }
-  rmva->hroc("MVA_"+method+"_rejBvsS")->Draw("c same");
+  rmva->hroc(".+_rejBvsS")->Draw("c same");
   auto tex_label2 = xjjroot::drawtex(0.25, 0.51, rmva->info("label2").c_str(), 0.038, 11);
   leg->Draw();
   xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
@@ -102,7 +99,7 @@ int macro(std::string inputname) {
   hempty->Draw("axis");
   for (const auto& h : h1ys.at("rejBvsS"))
     h->Draw("c same");
-  rmva->hroc("MVA_"+method+"_rejBvsS")->Draw("c same");
+  rmva->hroc(".+_rejBvsS")->Draw("c same");
   tex_label2->Draw();
   leg->Draw();
   xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
@@ -111,7 +108,6 @@ int macro(std::string inputname) {
   // significance
   const auto scaleto25 = std::atof(rmva->info("scaleto25").c_str());
   __XJJLOG << ">> scale to 25 = "<<scaleto25<<std::endl;
-  auto* df = new xjjroot::dfitter("3S");
   for (int i=0; i<h1ys.at("massAnchor").size(); i++) {
     auto *h1_effS = h1ys["effS"].at(i), *h1_effB = h1ys["effB"].at(i);
 
@@ -123,6 +119,7 @@ int macro(std::string inputname) {
     pdf->prepare();
     df->fit(h, hmc, hmcswap);
     xjjroot::drawtexgroup(0.25, 0.86, { label_y(i), Form("%s > %.2f", method.c_str(), h1_effS->GetBinLowEdge(jmva_anchor)) }, 0.035, 13);
+    df->draw_leg();
     df->draw_result(0.25, 0.86-2*0.035*1.15, 0.035);
     xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
     pdf->write();
@@ -146,11 +143,11 @@ int macro(std::string inputname) {
     h1ys["sig25"].push_back(hsig); //
 
     pdf->prepare();
-    hmc->Draw("axis");
-    df->f_mc_mass()->Draw("same");
-    df->f_mc_swap()->Draw("same");
-    hmc->Draw("histe same");
-    hmcswap->Draw("histe same");
+    hmc->Draw("pe");
+    hmcswap->Draw("pe same");
+    df->draw_fmc();
+    xjjroot::drawtex(0.25, 0.86, label_y(i).c_str(), 0.035, 13);
+    df->draw_params(0.25, 0.86-1*0.035*1.15, 0.035);
     xjjroot::drawCMS(xjjroot::CMS::simulation, "P#scale[0.9]{YTHIA}8#scale[0.5]{ }#gammaN (5.02 TeV)");
     pdf->write();
   }
@@ -174,7 +171,7 @@ int macro(std::string inputname) {
   hempty->Draw("axis");  
   for (const auto& h : h1ys.at("effS"))
     h->Draw("c same");
-  rmva->hroc("MVA_"+method+"_effS")->Draw("c same");
+  rmva->hroc(".+_effS")->Draw("c same");
   tex_label2->Draw();
   leg->Draw();
   xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
@@ -186,7 +183,7 @@ int macro(std::string inputname) {
   hempty->Draw("axis");  
   for (const auto& h : h1ys.at("effB"))
     h->Draw("c same");
-  rmva->hroc("MVA_"+method+"_effB")->Draw("c same");
+  rmva->hroc(".+_effB")->Draw("c same");
   xjjroot::movetex_n_draw(tex_label2, 0.55, 0.81, 11);
   xjjroot::moveleg_n_draw(leg, 0.55, 0.8);
   xjjroot::drawCMS(xjjroot::CMS::internal, rmva->info("label"));
@@ -217,7 +214,7 @@ int main(int argc, char* argv[]) {
 void style_hist(TH1D* h) {
   std::string t = xjjc::str_eraseall(h->GetName(), "MVA_");
   if (xjjc::str_contains(t, "mass")) {
-    xjjroot::dfitter::sethist(h);
+    xjjroot::dfitter::set_hist(h);
   } else if (std::regex_match(t, std::regex(".+__y-[0-9]+")) &&
              (xjjc::str_contains(t, "rejBvsS") || xjjc::str_contains(t, "eff") || xjjc::str_contains(t, "sig"))) {
     int i = std::atoi(xjjc::str_erasestar(t, "*__y-").c_str());
@@ -225,7 +222,7 @@ void style_hist(TH1D* h) {
   } else if (xjjc::str_contains(t, "_S") && !xjjc::str_contains(t, "_B")) {
     xjjroot::setthgrstyle(h, xjjroot::mycolor_satmiddle.at("blue"), 20, 1.3, xjjroot::mycolor_satmiddle.at("blue"), 1, 1, xjjroot::mycolor_satmiddle.at("blue"), 0.5, 1001);
   } else if (xjjc::str_contains(t, "_B") && !xjjc::str_contains(t, "_S")) {
-    xjjroot::setthgrstyle(h, xjjroot::mycolor_satmiddle.at("red"), 20, 1.3, xjjroot::mycolor_satmiddle.at("red"), 1, 1, xjjroot::mycolor_satmiddle.at("red"), 1, 3354);
+    xjjroot::setthgrstyle(h, xjjroot::mycolor_satmiddle2.at("red"), 20, 1.3, xjjroot::mycolor_satmiddle2.at("red"), 1, 1, xjjroot::mycolor_satmiddle2.at("red"), 1, 3354);
   } else if (xjjc::str_contains(h->GetName(), "MVA_")) {
     xjjroot::setlinestyle(h, kBlack, 4, 4);
   }

@@ -69,6 +69,8 @@ std::vector<TH1D*> mytmva::mvaroot::hrocs(const std::string &pattern) const {
 TH1D* mytmva::mvaroot::hroc(const std::string &key) const {
   TH1D* result = nullptr;
   auto hs = hrocs(key);
+  if (hs.size() > 1)
+    __XJJLOG << "?? more than one hist matching key " << key << std::endl;
   return hs.size() > 0 ? hs.front() : nullptr;
 }
 
