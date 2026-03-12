@@ -9,7 +9,7 @@ int macro(std::string configfile) {
   //
   std::cout<<std::endl;
   xjjc::config conf(configfile);
-  auto outputname = conf.has("Name") ? conf.get("Name") : xjjc::str_gettag_from_file(configfile);
+  auto outputname = conf.has("Name") ? conf.get("Name") : xjjc::str_tag_from_file(configfile);
   auto* inf = TFile::Open(Form("rootfiles/%s.root", outputname.c_str()));
   auto labels = conf.get_vec("Label_2");
   auto ismc = conf.has("isMC") ? conf.get<bool>("isMC") : false;
@@ -23,7 +23,7 @@ int macro(std::string configfile) {
   xjjroot::drawCMS(ismc ? xjjroot::CMS::simulation : xjjroot::CMS::internal, conf.get("Label_1")); \
   xjjroot::drawtexgroup(0.83, 0.85, labels, 0.04, 33, 42, 1.15);
 
-  xjjroot::setgstyle(1, 2, 1);
+  xjjroot::setgstyle(1, 2, xjjroot::Colz);
   xjjroot::adjust_margin(1, 3, 1, 0.7);
   TGaxis::SetMaxDigits(4);
   auto* pdf = new xjjroot::mypdf("figspdf/" + outputname + ".pdf");

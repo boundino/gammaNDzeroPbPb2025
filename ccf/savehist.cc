@@ -11,7 +11,7 @@ int macro(std::string configfile) {
   std::cout<<std::endl;
   xjjc::config conf(configfile);
   auto* nt = xjjana::chain_files(conf.get_vec("Inputs"), "Tree");
-  auto outputname = conf.has("Name") ? conf.get("Name") : xjjc::str_gettag_from_file(configfile);
+  auto outputname = conf.has("Name") ? conf.get("Name") : xjjc::str_tag_from_file(configfile);
   std::cout<<"\e[1m"<<outputname<<"\e[0m"<<std::endl;
   auto cut = conf.has("Cut") ? conf.get("Cut") : "(1)";
   // cut += " && clusComp_quality > 0 && clusComp_quality < 1000.0"; 
@@ -24,7 +24,7 @@ int macro(std::string configfile) {
   auto* outf = xjjroot::newfile("rootfiles/" + outputname + ".root");
 
 #define SET_AND_PROJECT_HIST(q)                                         \
-  auto* h_qual_nhit##q = new TH2F("h_qual_nhit" #q, ";Number of Pixel Hits;Cluster-Vertex Compatibility", 180, 0, 4500, 50, 0, 10); \
+  auto* h_qual_nhit##q = new TH2F("h_qual_nhit" #q, ";Number of Pixel Hits;Cluster-Vertex Compatibility", 200, 0, 20000, 50, 0, 10); \
   std::cout<<cut##q<<std::endl;                                         \
   nt->Project(h_qual_nhit##q->GetName(), "clusComp_quality:clusComp_nPixHits", cut##q.c_str()); \
   xjjroot::writehist(h_qual_nhit##q);
