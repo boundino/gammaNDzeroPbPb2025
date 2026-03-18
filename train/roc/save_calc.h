@@ -14,6 +14,16 @@ namespace save {
     for (const auto& m : globals::mask_br)
       tr->SetBranchStatus(m.first.c_str(), m.second);
   }
+
+  std::string common_cut(const std::string& cut_a, const std::string& cut_b) {
+    auto cuts_a = xjjc::str_divide_trim(cut_a, "&&"), cuts_b = xjjc::str_divide_trim(cut_b, "&&");
+    std::string r;
+    for (const auto& cc : cuts_a) {
+      if (std::ranges::find(cuts_b, cc) != cuts_b.end())
+        r += ((r.empty()?"":" && ") + cc);
+    }
+    return r;
+  }
 }
 
 namespace calc {
@@ -21,7 +31,7 @@ namespace calc {
     // if (Z nbins is not 2) ...
     ymax = (ymax < 0 ? h3->GetXaxis()->GetNbins()+1 : ymax);
     auto* h1 = (TH1F*)h3->ProjectionZ(Form("%s_pass", xjjc::str_replaceall(h3->GetName(), "h3_", "h1_").c_str()),
-                                      0, ymax, // y
+                                      ymin, ymax, // y
                                       0, h3->GetYaxis()->GetNbins()+1); // mass
     float eff = h1->GetBinContent(2) / h1->Integral(1, h1->GetNbinsX()); // passed
     delete h1;
