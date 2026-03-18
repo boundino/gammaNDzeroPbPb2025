@@ -24,15 +24,18 @@ namespace mytmva
   class mvaprod
   {
   public:
-    mvaprod(std::string weight);
+    mvaprod(std::string weight, bool verbose = true);
     void getnote(const std::string& trainrootfile = "");
     void writenote(TTree* info, const std::string& suffix);
     float evalmva(mytmva::varval* values, int j);
-    std::string method() const { return method_; }
     bool valid() { return valid_; }
+    // print info
+    std::string method() const { return method_; }
+    std::string xmlname() const { return xmlname_; }
+    std::string briefing() const;
     
   private:
-    bool valid_;
+    bool valid_, verbose_;
     std::string xmlname_;
     TMVA::Reader* reader_;
     std::string method_;
@@ -41,17 +44,19 @@ namespace mytmva
     std::string cuts_, cutb_, varinfo_, varnote_;
   };
 
-  xjjc::array2D<std::map<std::string, mvaprod*>> dir_to_weights(const std::string&);
+  xjjc::array2D<std::map<std::string, mvaprod*>> dir_to_weights(const std::string& prefix, std::vector<float> ybins, bool verbose = false);
 }
 
-mytmva::mvaprod::mvaprod(std::string weight) :
+mytmva::mvaprod::mvaprod(std::string weight, bool verbose) :
   valid_(true),
-  xmlname_(weight),
-  reader_(new TMVA::Reader("!Color:!Silent")) {
+  verbose_(verbose),
+  xmlname_(weight) {
 
+  reader_ = new TMVA::Reader(Form("%s", verbose_ ? "!Silent" : "!Color:Silent"));
+  
   // read weight file
   void *doc = TMVA::gTools().xmlengine().ParseFile(xmlname_.c_str(), TMVA::gTools().xmlenginebuffersize());
-  if (!doc) { std::cout<<__FUNCTION__<<": failed to parse weight xml file: "<<xmlname_<<std::endl; valid_ = false; }
+  if (!doc) { __XJJLOG << "!! failed to parse weight xml file: " << xmlname_ << std::endl; valid_ = false; }
   if (valid_) {
     void* rootnode = TMVA::gTools().xmlengine().DocGetRootElement(doc); // node "MethodSetup"
     // method
@@ -59,7 +64,7 @@ mytmva::mvaprod::mvaprod(std::string weight) :
     TMVA::gTools().ReadAttr(rootnode, "Method", fullmethodname);
     method_ = fullmethodname; //
     method_.erase(0, fullmethodname.find("::") + 2);
-    std::cout<<std::left<<std::setw(10)<<method_<<" // "<<fullmethodname<<mytmva::nocolor<<std::endl;
+    if (verbose_) std::cout<<std::left<<std::setw(10)<<method_<<" // "<<fullmethodname<<mytmva::nocolor<<std::endl;
     // variable
     void* variables = TMVA::gTools().GetChild(rootnode, "Variables");
     UInt_t NVar = 0;
@@ -87,29 +92,28 @@ mytmva::mvaprod::mvaprod(std::string weight) :
 
   if (valid_) {
     // reader
-    std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": Add variable:"<<mytmva::nocolor<<std::endl;
+    if (verbose_) __XJJLOG << mytmva::titlecolor << "++ Add variable:" << mytmva::nocolor << std::endl;
     for (const auto& v : varnames_) {
       varval_[v] = 0; //
-      std::cout<<std::left<<std::setw(10)<<v<<" // "<<mytmva::findvar(v)->var.c_str()<<std::endl;
+      if (verbose_) __XJJLOG << ">> " << std::left << std::setw(10) << v << " // " << mytmva::findvar(v)->var.c_str() << std::endl;
       reader_->AddVariable(mytmva::findvar(v)->var.c_str(), &(varval_.at(v)));
       varnote_ += (";" + v);
     }
-    std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": Add spectator:"<<mytmva::nocolor<<std::endl;
+    if (verbose_) __XJJLOG<<mytmva::titlecolor<<"++ Add spectator:"<<mytmva::nocolor<<std::endl;
     for (const auto& v : specnames_) {
       specval_[v] = 0; //
-      std::cout<<std::left<<std::setw(10)<<v<<" // "<<mytmva::findvar(v)->var.c_str()<<std::endl;
+      if (verbose_) __XJJLOG<<std::left<<std::setw(10)<<v<<" // "<<mytmva::findvar(v)->var.c_str()<<std::endl;
       reader_->AddSpectator(mytmva::findvar(v)->var.c_str(), &(specval_.at(v)));
     }
     //
-    std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": Book method:"<<mytmva::nocolor<<std::endl;
+    if (verbose_) __XJJLOG<<mytmva::titlecolor<<"++ Book method:"<<mytmva::nocolor<<std::endl;
     std::string methodtag(method_ + " method");
     reader_->BookMVA(methodtag.c_str(), xmlname_.c_str()); // ~
   }
 }
 
 void mytmva::mvaprod::getnote(const std::string& trainrootfile) {
-  std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": Training root file:"<<mytmva::nocolor<<std::endl;
-  std::cout<<trainrootfile<<std::endl;
+  if (verbose_) __XJJLOG<<mytmva::titlecolor<<"++ Training root file:"<<mytmva::nocolor<<std::endl<<"    "<<trainrootfile<<std::endl;
   auto* inf = TFile::Open(trainrootfile.c_str());
   if (inf) {
     auto* rinfo = (TTree*)inf->Get("dataset/tmvainfo");
@@ -118,7 +122,7 @@ void mytmva::mvaprod::getnote(const std::string& trainrootfile) {
       rinfo->SetBranchAddress("cuts", &cuts);
       rinfo->SetBranchAddress("cutb", &cutb);
       rinfo->SetBranchAddress("var", &varinfo);
-      std::cout<<mytmva::titlecolor<<"==> "<<__FUNCTION__<<": mva info:"<<mytmva::nocolor<<std::endl;
+      __XJJLOG<<mytmva::titlecolor<< "++ mva info:"<<mytmva::nocolor<<std::endl;
       rinfo->Show(0); std::cout<<std::endl;
       rinfo->GetEntry(0);
       cuts_ = *cuts;
@@ -130,7 +134,6 @@ void mytmva::mvaprod::getnote(const std::string& trainrootfile) {
 }
 
 void mytmva::mvaprod::writenote(TTree* info, const std::string& suffix) {
-  std::cout<<__FUNCTION__<<std::endl;
   info->Branch(Form("cuts%s", suffix.c_str()), &(cuts_));
   info->Branch(Form("cutb%s", suffix.c_str()), &(cutb_));
   info->Branch(Form("varinfo%s", suffix.c_str()), &(varinfo_));
@@ -151,34 +154,92 @@ float mytmva::mvaprod::evalmva(mytmva::varval* values, int j) {
   return result;
 }
 
-xjjc::array2D<std::map<std::string, mvaprod*>> mytmva::dir_to_weights(const std::string& prefix) {
-  auto prods = xjjc::array2d<std::map<std::string, mvaprod*>>(mytmva::ptbins.size()-1, mytmva.ybins.size()-1);
+xjjc::array2D<std::map<std::string, mytmva::mvaprod*>> mytmva::dir_to_weights(const std::string& prefix, std::vector<float> ybins, bool verbose) {
+  xjjc::print_vec_h(ybins, 0);
+  if (ybins.empty()) {
+    __XJJLOG << "!! bad ybins, mva deactivated." << std::endl;
+    return {};
+  }
+  auto prods = xjjc::array2d<std::map<std::string, mvaprod*>>(mytmva::ptbins.size()-1, ybins.size()-1);
   for (int i=0; i<mytmva::ptbins.size()-1; i++) {
-    for (int j=0; j<mytmva::ybins.size()-1; j++) {
+    for (int j=0; j<ybins.size()-1; j++) {
       mvaprod* pd = nullptr;
+      auto& iprod = prods.at(i).at(j);
       if (xjjc::str_contains(prefix, ".weights.xml")) { // single weight for all kinematic bins
-        pd = new mvaprod(prefix);
+        pd = new mvaprod(prefix, verbose);
+        if (!pd->valid()) { __XJJLOG << "!! has a bad weight for " << prefix << ", mva deactivated." << std::endl;
+          pd = nullptr;
+        } else if (iprod.find(pd->method()) != iprod.end()) { __XJJLOG << "!! repeated method " << pd->method() << std::endl;
+          continue;
+        }
+        iprod[pd->method()] = pd; //
       } else { // different weights 
-        auto weightdir = prefix + "_" + mytmva::mkname_pt(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + "_" + mytmva::mkname_y(mytmva::ybins.at(j), mytmva::ybins.at(j+1));
-        __XJJLOG << "++ found weight files in " << weightdir << ": " << std::endl;
+        auto weightdir = prefix + "_" + mytmva::mkname_pt(mytmva::ptbins.at(i), mytmva::ptbins.at(i+1)) + "_" + mytmva::mkname_y(ybins.at(j), ybins.at(j+1));
+        __XJJLOG << "++ found weight files in " << weightdir << std::endl;
         for (const auto& entry : fs::directory_iterator(weightdir)) {
           std::string entrypath(entry.path());
           if (!xjjc::str_contains(entrypath, ".weights.xml")) continue;
-          std::cout<<entrypath<<std::endl;
-          pd = new mvaprod(entrypath); //
+          if (verbose) __XJJLOG<<"   >> "<<entrypath<<std::endl;
+          pd = new mvaprod(entrypath, verbose); //
+          if (!pd->valid()) { __XJJLOG << "!! has a bad weight for " << prefix << ", mva deactivated." << std::endl;
+            pd = nullptr;
+          } else if (iprod.find(pd->method()) != iprod.end()) { __XJJLOG << "!! repeated method " << pd->method() << std::endl;
+            continue;
+          }
+          iprod[pd->method()] = pd; //
         }
       }
-      auto& iprod = prods.at(i).at(j);
-      if (!pd->valid()) {
-        __XJJLOG << "!! has a bad weight for " << prefix << ". mva is deactivated." << std::endl;
-        pd = nullptr;
-      } else if (iprod.find(pd->method()) != iprod.end()) {
-        __XJJLOG << "!! repeated method " << pd->method() << std::endl;
-        continue;
-      }
-      iprod[pd->method()] = pd; //
     }
   }
+  // bad if any kinematic bin is bad
+  for (auto& w1 : prods) {
+    for (auto& w2 : w1) {
+      if (w2.empty()) return {};
+      for (auto& [_, pp] : w2) {
+        if (!pp) return {};
+      }
+    }
+  }
+  // print good
+  xjjc::print_tab([&prods]() {
+    xjjc::array2D<std::string> result;
+    for (const auto& pts : prods) {
+      std::vector<std::string> rys;
+      for (const auto& ys : pts) {
+        rys.push_back(Form("%d methods", ys.size()));
+      }
+      result.push_back(rys);
+    }
+    return result;
+  }(), 3);
+
+  if (verbose) {
+    for (const auto& pts : prods) {
+      xjjc::print_tab([&pts]() {
+        xjjc::array2D<std::string> result;
+        for (const auto& ys : pts) {
+          std::vector<std::string> rys;
+          for (const auto& [_, m] : ys) {
+            rys.push_back(m->briefing());
+          }
+          result.push_back(rys);
+        }
+        return result;
+      }(), 0);
+    }
+  }
+  return prods;
+}
+
+std::string mytmva::mvaprod::briefing() const {
+  std::string r = "";
+  if (valid_) {
+    r += ("(" + method_ + ") ");
+    std::string tvar = "";
+    for (const auto& v : varnames_) tvar += ((tvar.empty()?"":"/") + v);
+    r += tvar;
+  }
+  return r;
 }
 
 #endif

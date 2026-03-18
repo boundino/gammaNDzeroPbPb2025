@@ -19,12 +19,14 @@
 
 #include "xjjcuti.h"
 #include "xjjrootuti.h"
+
+#define __PRESET_TRAIN_YBINS
 #include "TMVAClassification.h"
 
 int TMVAClassification(std::string inputSname, std::string inputBname, std::string mycutS, std::string mycutB, 
                        std::string outputname, int iptbin, int iybin,
                        std::string mymethod, std::string stage,
-                       std::string mycutPre = "") {
+                       std::string mycutData = "") {
   auto ptmin = mytmva::ptbins[iptbin], ptmax = mytmva::ptbins[iptbin+1], ymin = mytmva::ybins[iybin], ymax = mytmva::ybins[iybin+1];
   std::string outfname = mytmva::mkname(outputname, mymethod, stage, ptmin, ptmax, ymin, ymax);
   std::string outputstr = xjjc::str_tag_from_file(outfname);
@@ -290,6 +292,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
 
   std::string cutS = Form("%s && Dpt>=%.2f && Dpt<%.2f && Dy>=%.1f && Dy<%.1f", mycutS.c_str(), ptmin, ptmax, ymin, ymax);
   std::string cutB = Form("%s && Dpt>=%.2f && Dpt<%.2f && Dy>=%.1f && Dy<%.1f", mycutB.c_str(), ptmin, ptmax, ymin, ymax);
+  std::string cutData = (mycutData.empty() ? "" : Form("%s && Dpt>=%.2f && Dpt<%.2f && Dy>=%.1f && Dy<%.1f", mycutData.c_str(), ptmin, ptmax, ymin, ymax));
 
   const TCut tcutS(cutS.c_str());
   const TCut tcutB(cutB.c_str());
@@ -602,7 +605,7 @@ int TMVAClassification(std::string inputSname, std::string inputBname, std::stri
   info->Branch("inputBname", &inputBname);
   info->Branch("cutS", &cutS);
   info->Branch("cutB", &cutB);
-  info->Branch("cutPre", &mycutPre);
+  info->Branch("cutData", &cutData);
   info->Branch("var", &varinfo);
   info->Branch("iptbin", &iptbin);
   info->Branch("ptmin", &ptmin);
