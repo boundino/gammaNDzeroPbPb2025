@@ -3,9 +3,14 @@
 
 namespace bins {
 
-#ifdef __BINS_PTY_ANA__
-  std::vector<double> ybins = { -2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5, 2. }; // can be overwritten in .cc
-  std::vector<double> ptbins = { 2., 5. }; // can be overwritten in .cc
+#ifdef __BINS_PTY_PLACEHOLDER__
+  std::vector<double> ybins;
+  std::vector<double> ptbins;
+#endif
+
+#ifdef __BINS_PTY_BDT__
+  const std::vector<double> ybins = { -2., -1., 0., 1., 2. };
+  const std::vector<double> ptbins = { 2., 5. };
 #endif
 
 #ifdef __BINS_PTY_EFF__

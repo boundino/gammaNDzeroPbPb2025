@@ -11,7 +11,8 @@ namespace global {
     int nbin = 1;
     int logy = 0;
     int isbranch = 1;
-    std::vector<float> bins = {};
+    std::vector<double> bins = {};
+    std::string note = "";
   };
 }
 

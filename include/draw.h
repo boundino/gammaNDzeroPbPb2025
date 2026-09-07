@@ -9,6 +9,12 @@ namespace draw {
   public:
     explicit bintex(TH1* h = nullptr, int xyz_y = 0,  int xyz_pt = 0)
       : h_bins(h), axis_pt(decide_axis(xyz_pt)), axis_y(decide_axis(xyz_y)) { }
+
+    void seth(TH1* h = nullptr, int xyz_y = 0,  int xyz_pt = 0) {
+      h_bins = h;
+      axis_pt = decide_axis(xyz_pt);
+      axis_y = decide_axis(xyz_y);
+    }
     bool valid() { return h_bins != nullptr; }
     
     std::string label_y(int i = -1) const {
@@ -41,9 +47,9 @@ namespace draw {
     
   private:
     TH1* h_bins;
-    const TAxis *axis_pt, *axis_y;
-    const TAxis* decide_axis(int xyz) {
-      const TAxis* axis = nullptr;
+    TAxis *axis_pt, *axis_y;
+    TAxis* decide_axis(int xyz) {
+      TAxis* axis = nullptr;
       if (!h_bins) return axis;
       if (xyz == 0) {
         axis = h_bins->GetXaxis();

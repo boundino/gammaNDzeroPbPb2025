@@ -1,12 +1,13 @@
 #!/bin/bash
 
 VARS=(
-    nTrackInAcceptanceHP
-    ZDCsumPlus
-    ZDCsumMinus
-    HFEMaxPlusforest
-    HFEMaxPlusforest-Low
-    HFEMaxMinusforest
+    # nTrackInAcceptanceHP
+    # ZDCsumPlus
+    # ZDCsumMinus
+    # HFEMaxPlusforest
+    # HFEMaxMinusforest
+    # HFEMaxPlusforest-zoom
+    # HFEMaxMinusforest-zoom
     nVtx
     
     #
@@ -37,14 +38,13 @@ for var in "${VARS[@]}" ; do
         [[ ($var == D* && ${cutd} != 1) || ($var != D* && ${cutd} == 1) ]] || { continue ; }
 
         draw_list=(
-            # nocut${cutd_tag}-d23-rJan24,nocut${cutd_tag}-d23-rFeb25,nocut${cutd_tag}-d25-rp";"0
-            nocut${cutd_tag}-d23-rJan24,nocut${cutd_tag}-d23-rFeb25";"0
             # gammaN${cutd_tag}-d23-rJan24,gammaN${cutd_tag}-d23-rFeb25,gammaN${cutd_tag}-d25-rp";"0
             # gammaN${cutd_tag}-d23-rJan24,gammaN${cutd_tag}-d23-rFeb25";"0
             # gammaN${cutd_tag}-d23-rJan24,gammaN${cutd_tag}-d25-rp";"0
-            # Ngamma${cutd_tag}-d23-rJan24,Ngamma${cutd_tag}-d23-rFeb25,Ngamma${cutd_tag}-d25-rp";"0
-            # Ngamma${cutd_tag}-d23-rJan24,Ngamma${cutd_tag}-d23-rFeb25";"0
-            # Ngamma${cutd_tag}-d23-rJan24,Ngamma${cutd_tag}-d25-rp";"0
+
+            gammaN-nogap${cutd_tag}-d23-rFeb25,gammaN-nogap${cutd_tag}-d25-rp";"0 # for HFEmax
+            # gammaN-noccf${cutd_tag}-d23-rJan24,gammaN-noccf${cutd_tag}-d23-rFeb25,gammaN${cutd_tag}-d25-rp";"0
+            # gammaN${cutd_tag}-d23-rJan24,gammaN${cutd_tag}-d23-rFeb25,gammaN${cutd_tag}-d25-rp";"0
         )
         for items in "${draw_list[@]}" ; do
             IFS=';' ; draw_opts=($items) ; unset IFS ; do_save_png=${draw_opts[1]}

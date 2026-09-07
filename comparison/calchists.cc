@@ -26,11 +26,12 @@ int macro(std::string input)
   //
   std::map<std::string, TH1D*> h1s;
   std::map<std::string, std::vector<TH1D*>> h1vs;
-  h1s["var"] = (TH1D*)h3->ProjectionY("h1_var", 0, -1, 0, -1, "e");
+  h1s["var_overflow"] = (TH1D*)h3->ProjectionY("h1_var_overflow", 0, -1, 0, -1, "e");
+  h1s["var"] = (TH1D*)h3->ProjectionY("h1_var", 1, h3->GetNbinsX(), 1, h3->GetNbinsZ(), "e");
 
   for (int i=0; i<h3->GetXaxis()->GetNbins(); i++) {
     auto* h = (TH1D*)h3->ProjectionY(Form("h1_var__%s-%d", axisvars[0].c_str(), i),
-                                     i+1, i+1, 0, -1, "e");
+                                     i+1, i+1, 1, h3->GetNbinsZ(), "e");
     h1vs["var"].push_back(h);
   }
 

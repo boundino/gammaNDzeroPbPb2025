@@ -2,9 +2,9 @@
 
 INPUTS=(
     # Event variables
-    # "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward0_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward1_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward2_Dpt-2_Trig-2.root;2023 (Jan24 Reco);d23-rJan24"
-    # "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward0_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward1_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward2_Dpt-2_Trig-2.root;2023 (Feb25 Reco);d23-rFeb25"
-    # "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260426-yrefmva_PbPbUPC_HIForward0_Dpt-2.root;2025;d25-rp"
+    "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward0_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward1_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward2_Dpt-2_Trig-2.root;2023 (Jan24 Reco);d23-rJan24;"
+    "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward0_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward1_Dpt-2_Trig-2.root,/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260426-yrefmva_2023PbPbUPC_Feb2025ReReco_20260521Forest_HIForward2_Dpt-2_Trig-2.root;2023 (Feb25 Reco);d23-rFeb25;"
+    "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260426-yrefmva_PbPbUPC_HIForward0_Dpt-2.root;2025;d25-rp;"
 
     # D mesons
     # "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_2023PbPbUPC_Jan2024ReReco_20260212Forest_HIForward_Dpt-2_Trig-2_Dsize_xbr.root;2023 (Jan24 Reco);d23-rJan24"
@@ -12,8 +12,8 @@ INPUTS=(
     # "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260426-yrefmva_PbPbUPC_HIForward_Dpt-2_Dsize_12ePD.root;2025;d25-rp"
 
     # Empty BX
-    "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_HiForest_260218_HIEmptyBX_HIRun2023A_PromptReco_v2.root;#bf{2023} EmptyBX;d23-rp"
-    "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_HiForest_260218_HIEmptyBX_HIRun2025A_PromptReco_v1.root;#bf{2025} EmptyBX;d25-rp"
+    # "/eos/cms/store/group/phys_heavyions/wangj/Forest2023PbPb/Dzero_260212-hfle_HiForest_260218_HIEmptyBX_HIRun2023A_PromptReco_v2.root;2023 EmptyBX;d23-rp"
+    # "/eos/cms/store/group/phys_heavyions/wangj/Forest2025PbPb/Dzero_260212-hfle_HiForest_260218_HIEmptyBX_HIRun2025A_PromptReco_v1.root;2025 EmptyBX;d25-rp"
 )
 
 VARS=(
@@ -22,9 +22,9 @@ VARS=(
     # ZDCsumMinus
     # HFEMaxPlusforest
     # HFEMaxMinusforest
-    HFEMaxPlusforest-zoom
-    HFEMaxMinusforest-zoom
-    # nVtx
+    # HFEMaxPlusforest-zoom
+    # HFEMaxMinusforest-zoom
+    nVtx
     
     #
     # Dmass
@@ -41,17 +41,17 @@ VARS=(
 )
 
 CUTEVTS=(
-    # "isL1ZDCOr;HLT_ZDCOr && PV filter && ZDC 0nOr (1500 GeV);nocut;"
-    # #
-    # "isL1ZDCOr && ZDCgammaN && gapgammaN && selectedBkgFilter && selectedVtxFilter;#gammaN (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN;2023"
-    # "isL1ZDCOr && ZDCgammaN && gapgammaN && selectedBkgFilter && selectedVtxFilter && nVtx <= 3;#gammaN (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023, nVtx <= 3;gammaN-nvtx3;2023"
-    # "isL1ZDCOr && ZDCgammaN && HFEMaxPlus_forest < 16 && cscTightHalo2015Filter && selectedVtxFilter;#gammaN (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN;2025"
-    #
-    # "isL1ZDCOr && ZDCNgamma && gapNgamma && selectedBkgFilter && selectedVtxFilter;N#gamma (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;Ngamma;2023"
-    # "isL1ZDCOr && ZDCNgamma && gapNgamma && selectedBkgFilter && selectedVtxFilter && nVtx <= 3;N#gamma (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023, nVtx <= 3;Ngamma-nvtx3;2023"
-    # "isL1ZDCOr && ZDCNgamma && HFEMaxPlus_forest < 16 && cscTightHalo2015Filter && selectedVtxFilter;N#gamma (ZDCXOR, gap), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;Ngamma;2025"
+    # "isL1ZDCOr && ZDCgammaN && HFEMaxPlus_forest < 16 && cscTightHalo2015Filter && selectedVtxFilter;ZDC Xn0n (#gammaN), gap, |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN;2025"
+    # "isL1ZDCOr && ZDCgammaN && gapgammaN && selectedBkgFilter && selectedVtxFilter;ZDC Xn0n (#gammaN), gap, |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN;2023"
+    # "isL1ZDCOr && ZDCgammaN && gapgammaN && cscTightHalo2015Filter && selectedVtxFilter;ZDC Xn0n (#gammaN), gap, |v_{z}| < 15, cscHaloTight;gammaN-noccf;2023"
 
-    "isNotBptxOR;HLT_HIL1NotBptxOR;isNotBptxOR;"
+    "isL1ZDCOr && ZDCgammaN && selectedBkgFilter && selectedVtxFilter;ZDC Xn0n (#gammaN), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN-nogap;2023"
+    "isL1ZDCOr && ZDCgammaN && cscTightHalo2015Filter && selectedVtxFilter;ZDC Xn0n (#gammaN), |v_{z}| < 15, cscHaloTight%%clusComp for 2023;gammaN-nogap;2025"
+
+    # "isL1ZDCOr && ZDCgammaN && gapgammaN && selectedBkgFilter && selectedVtxFilter && nVtx <= 3;ZDC Xn0n (#gammaN), gap, |v_{z}| < 15, cscHaloTight%%clusComp, nVtx <= 3 for 2023;gammaN-nvtx3;2023"
+
+    # "isL1ZDCOr;HLT_ZDCOr && PV filter && ZDC0nOr (1500 GeV);nocut;"
+    # "isNotBptxOR;HLT_HIL1NotBptxOR;isNotBptxOR;"
 )
 ##
 
